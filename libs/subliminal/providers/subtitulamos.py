@@ -77,7 +77,7 @@ class SubtitulamosProvider(Provider):
         self.session.close()
 
     @region.cache_on_arguments(expiration_time=SHOW_EXPIRATION_TIME)
-    def get_episode_id(self, series, season, episode):
+    def get_episode_id(self, series, season, episode, year=None):
         q = '%s %dx%d' % (series, season, episode)
         logger.info('Getting episode id with query %s', q)
         r = self.session.get(self.server_url + '/search/query',  params={'q': q}, timeout=10)
@@ -89,7 +89,7 @@ class SubtitulamosProvider(Provider):
             return None
 
         for item in resultado:
-            if sanitize(item['name']) == sanitize(series) and item['episodes'] != []:
+            if sanitize(item['name']) in  (sanitize(series), ('%s %d' % (sanitize(series), year))) and item['episodes'] != []:
                 episode_id = item['episodes'][0]['id']
                 logger.debug('Episode id %s', episode_id)
                 return episode_id
@@ -129,7 +129,7 @@ class SubtitulamosProvider(Provider):
 
     def list_subtitles(self, video, languages):
         # lookup episode_id
-        episode_id = self.get_episode_id(video.series, video.season, video.episode)
+        episode_id = self.get_episode_id(video.series, video.season, video.episode, video.year)
 
         if episode_id is not None:
             subtitles = [s for s in self.query(episode_id, video.series, video.season, video.episode)
@@ -137,7 +137,7 @@ class SubtitulamosProvider(Provider):
             if subtitles:
                 return subtitles
         else:
-            logger.error('No episode found for %r S%rE%r', video.series, video.season, video.episode)
+            logger.error('No episode found for %r S%rE%r, year %r', video.series, video.season, video.episode, video.year)
 
         return []
 
