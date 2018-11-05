@@ -41,11 +41,17 @@
 			.fast.backward, .backward, .forward, .fast.forward { pointer-events: auto; }
 			.fast.backward.disabled, .backward.disabled, .forward.disabled, .fast.forward.disabled { pointer-events: none; }
 			.ui.progress:last-child {margin: 0 0 0em !important;}
+
+			.ui.progress .bar>.progress {
+                right: auto;
+                left: .5em;
+                color: rgba(0, 0, 0, 0.60);
+            }
 		</style>
 	</head>
 	<body>
 		<div id='loader' class="ui page dimmer">
-			<div class="ui indeterminate text loader">Loading...</div>
+			<div id="loader_text" class="ui indeterminate text loader">Loading...</div>
 		</div>
 		% include('menu.tpl')
 
