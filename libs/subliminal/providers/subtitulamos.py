@@ -40,8 +40,7 @@ class SubtitulamosSubtitle(Subtitle):
         matches = set()
 
         # series name
-        if video.series and sanitize(self.series)
-                in (sanitize(video.series), ('%s %d' % (sanitize(video.series), video.year))):
+        if video.series and sanitize(self.series) in (sanitize(video.series), ('%s %d' % (sanitize(video.series), video.year))):
             matches.add('series')
         # season
         if video.season and self.season == video.season:
