@@ -25,7 +25,7 @@ def store_subtitles(file):
             try:
                 with open(file, 'rb') as f:
                     mkv = enzyme.MKV(f)
-
+                
                 for subtitle_track in mkv.subtitle_tracks:
                     try:
                         if alpha2_from_alpha3(subtitle_track.language) != None:
@@ -163,7 +163,7 @@ def list_missing_subtitles(*no):
                     actual_subtitles_list.append(item[0])
             missing_subtitles = list(set(desired_subtitles) - set(actual_subtitles_list))
             missing_subtitles_global.append(tuple([str(missing_subtitles), episode_subtitles[0]]))
-
+            
     conn_db = sqlite3.connect(os.path.join(config_dir, 'db/bazarr.db'), timeout=30)
     c_db = conn_db.cursor()
     c_db.executemany("UPDATE table_episodes SET missing_subtitles = ? WHERE sonarrEpisodeId = ?", (missing_subtitles_global))
@@ -244,7 +244,7 @@ def series_scan_subtitles(no):
     c_db = conn_db.cursor()
     episodes = c_db.execute("SELECT path FROM table_episodes WHERE sonarrSeriesId = ?", (no,)).fetchall()
     c_db.close()
-
+    
     for episode in episodes:
         store_subtitles(path_replace(episode[0]))
 
