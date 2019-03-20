@@ -1,4 +1,4 @@
-<html>
+<html lang="en">
 	<head>
 		<!DOCTYPE html>
 		<script src="{{base_url}}static/jquery/jquery-latest.min.js"></script>
@@ -23,60 +23,52 @@
 			}
 			#fondblanc {
 				background-color: #ffffff;
-				border-radius: 0px;
-				box-shadow: 0px 0px 5px 5px #ffffff;
+				border-radius: 0;
+				box-shadow: 0 0 5px 5px #ffffff;
 				margin-top: 32px;
 				margin-bottom: 3em;
 				padding: 1em;
 			}
-			#logs {
-				margin-top: 4em;
-			}
-			.fast.backward, .backward, .forward, .fast.forward {
-    			cursor: pointer;
-			}
-			.fast.backward, .backward, .forward, .fast.forward { pointer-events: auto; }
-			.fast.backward.disabled, .backward.disabled, .forward.disabled, .fast.forward.disabled { pointer-events: none; }
-            .ui.tabular.menu > .disabled.item {
-                opacity: 0.45 !important;
-                pointer-events: none !important;
-            }
 		</style>
 	</head>
 	<body>
-		% from get_argv import config_dir
+		% from get_args import args
 
 		% import os
 		% import sqlite3
-		% from get_settings import get_general_settings
+		% from config import settings
 
-        %if get_general_settings()[24] is True:
-        %    monitored_only_query_string = ' AND monitored = "True"'
+        %if settings.sonarr.getboolean('only_monitored'):
+        %    monitored_only_query_string_sonarr = ' AND monitored = "True"'
         %else:
-        %    monitored_only_query_string = ""
+        %    monitored_only_query_string_sonarr = ""
         %end
 
-        % conn = sqlite3.connect(os.path.join(config_dir, 'db/bazarr.db'), timeout=30)
+        %if settings.radarr.getboolean('only_monitored'):
+        %    monitored_only_query_string_radarr = ' AND monitored = "True"'
+        %else:
+        %    monitored_only_query_string_radarr = ""
+        %end
+
+        % conn = sqlite3.connect(os.path.join(args.config_dir, 'db', 'bazarr.db'), timeout=30)
     	% c = conn.cursor()
-		% wanted_series = c.execute("SELECT COUNT(*) FROM table_episodes WHERE missing_subtitles != '[]'" + monitored_only_query_string).fetchone()
-		% wanted_movies = c.execute("SELECT COUNT(*) FROM table_movies WHERE missing_subtitles != '[]'" + monitored_only_query_string).fetchone()
+		% wanted_series = c.execute("SELECT COUNT(*) FROM table_episodes WHERE missing_subtitles != '[]'" + monitored_only_query_string_sonarr).fetchone()
+		% wanted_movies = c.execute("SELECT COUNT(*) FROM table_movies WHERE missing_subtitles != '[]'" + monitored_only_query_string_radarr).fetchone()
 		% c.close()
 
 		<div id='loader' class="ui page dimmer">
 		   	<div id="loader_text" class="ui indeterminate text loader">Loading...</div>
 		</div>
 		% include('menu.tpl')
-			
-		% import os
 
 		<div id="fondblanc" class="ui container">
 			<div class="ui top attached tabular menu">
-				<a id="series_tab" class="tabs item active" data-enabled="{{get_general_settings()[12]}}" data-tab="series">Series
+				<a id="series_tab" class="tabs item active" data-enabled="{{settings.general.getboolean('use_sonarr')}}" data-tab="series">Series
 					<div class="ui tiny yellow label">
 						{{wanted_series[0]}}
 					</div>
 				</a>
-				<a id="movies_tab" class="tabs item" data-enabled="{{get_general_settings()[13]}}" data-tab="movies">Movies
+				<a id="movies_tab" class="tabs item" data-enabled="{{settings.general.getboolean('use_radarr')}}" data-tab="movies">Movies
 					<div class="ui tiny green label">
 						{{wanted_movies[0]}}
 					</div>
@@ -103,13 +95,13 @@
 		.tab()
 	;
 
-	$('#series_tab').click(function() {
+	$('#series_tab').on('click', function() {
 	    loadURLseries(1);
-	})
+	});
 
-	$('#movies_tab').click(function() {
+	$('#movies_tab').on('click', function() {
 	    loadURLmovies(1);
-	})
+	});
 
 	function loadURLseries(page) {
 		$.ajax({
@@ -133,25 +125,25 @@
 	    });
 	}
 
-	$('a:not(.tabs), button:not(.cancel, #download_log)').click(function(){
+	$('a:not(.tabs), button:not(.cancel, #download_log)').on('click', function(){
 		$('#loader').addClass('active');
-	})
+	});
 
-	if ($('#series_tab').data("enabled") == "True") {
+	if ($('#series_tab').data("enabled") === "True") {
         $("#series_tab").removeClass('disabled');
     } else {
         $("#series_tab").addClass('disabled');
     }
 
-    if ($('#movies_tab').data("enabled") == "True") {
+    if ($('#movies_tab').data("enabled") === "True") {
         $("#movies_tab").removeClass('disabled');
     } else {
         $("#movies_tab").addClass('disabled');
     }
-	if ($('#series_tab').data("enabled") == "True") {
+	if ($('#series_tab').data("enabled") === "True") {
         $( "#series_tab" ).trigger( "click" );
     }
-    if ($('#series_tab').data("enabled") == "False" && $('#movies_tab').data("enabled") == "True") {
+    if ($('#series_tab').data("enabled") === "False" && $('#movies_tab').data("enabled") === "True") {
         $( "#movies_tab" ).trigger( "click" );
     }
 </script>

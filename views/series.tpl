@@ -1,4 +1,4 @@
-<html>
+<html lang="en">
 	<head>
 		<!DOCTYPE html>
 		<script src="{{base_url}}static/jquery/jquery-latest.min.js"></script>
@@ -22,8 +22,8 @@
 			}
 			#fondblanc {
 				background-color: #ffffff;
-				border-radius: 0px;
-				box-shadow: 0px 0px 5px 5px #ffffff;
+				border-radius: 0;
+				box-shadow: 0 0 5px 5px #ffffff;
 				margin-top: 32px;
 				margin-bottom: 3em;
 				padding: 2em 3em 2em 3em;
@@ -40,7 +40,7 @@
 			}
 			.fast.backward, .backward, .forward, .fast.forward { pointer-events: auto; }
 			.fast.backward.disabled, .backward.disabled, .forward.disabled, .fast.forward.disabled { pointer-events: none; }
-			.ui.progress:last-child {margin: 0 0 0em !important;}
+			.ui.progress:last-child {margin: 0 0 0 !important;}
 
 			.ui.progress .bar>.progress {
                 right: auto;
@@ -79,9 +79,9 @@
 						<td><a href="{{base_url}}episodes/{{row[5]}}">{{row[1]}}</a></td>
 						<td>
 							%if os.path.isdir(row[2]):
-							<span data-tooltip="This path seems to be valid." data-inverted=""><i class="checkmark icon"></i></span>
+							<span data-tooltip="This path seems to be valid." data-inverted="" data-position="top left"><i class="checkmark icon"></i></span>
 							%else:
-							<span data-tooltip="This path doesn't seems to be valid." data-inverted=""><i class="warning sign icon"></i></span>
+							<span data-tooltip="This path doesn't seems to be valid." data-inverted="" data-position="top left"><i class="warning sign icon"></i></span>
 							%end
 							{{row[2]}}
 						</td>
@@ -94,7 +94,7 @@
 								%end
 							%end
 						</td>
-						<td>{{!"" if row[4] == None else row[4]}}</td>
+						<td>{{!"" if row[4] is None else row[4]}}</td>
 						<td>
 							%total_subs = 0
 							%missing_subs = 0
@@ -127,7 +127,7 @@
 								end
 							end
 							%>
-							<div class="config ui inverted basic compact icon" data-tooltip="Edit series" data-inverted="" data-no="{{row[5]}}" data-title="{{row[1]}}" data-poster="{{row[6]}}" data-languages="{{!subs_languages_list}}" data-hearing-impaired="{{row[4]}}" data-audio="{{row[7]}}">
+							<div class="config ui inverted basic compact icon" data-tooltip="Edit series" data-inverted="" data-position="top right" data-no="{{row[5]}}" data-title="{{row[1]}}" data-poster="{{row[6]}}" data-languages="{{!subs_languages_list}}" data-hearing-impaired="{{row[4]}}" data-audio="{{row[7]}}">
 								<i class="ui black configure icon"></i>
 							</div>
 						</td>
@@ -199,7 +199,7 @@
 									<div class="nine wide column">
 										<select name="languages" id="series_languages" {{!'multiple="" ' if single_language is False else ''}}class="ui fluid selection dropdown">
 											<option value="">Languages</option>
-											%if single_language is True:
+											%if single_language:
                                         	<option value="None">None</option>
                                         	%end
 											%for language in languages:
@@ -241,34 +241,33 @@
 		sessionStorage.clear();
 	}
 
-	$('a, button:not(.cancel)').click(function(){
+	$('a, button:not(.cancel)').on('click', function(){
 		$('#loader').addClass('active');
-	})
+	});
 
-	$('.fast.backward').click(function(){
+	$('.fast.backward').on('click', function(){
 		location.href="?page=1";
-	})
-	$('.backward:not(.fast)').click(function(){
+	});
+	$('.backward:not(.fast)').on('click', function(){
 		location.href="?page={{int(page)-1}}";
-	})
-	$('.forward:not(.fast)').click(function(){
+	});
+	$('.forward:not(.fast)').on('click', function(){
 		location.href="?page={{int(page)+1}}";
-	})
-	$('.fast.forward').click(function(){
+	});
+	$('.fast.forward').on('click', function(){
 		location.href="?page={{int(max_page)}}";
-	})
+	});
 
-	$('#serieseditor').click(function(){
+	$('#serieseditor').on('click', function(){
 		window.location = '{{base_url}}serieseditor';
-	})
+	});
 
 	$('.modal')
 		.modal({
 			autofocus: false
-		})
-	;
+		});
 
-	$('.config').click(function(){
+	$('.config').on('click', function(){
 		sessionStorage.scrolly=$(window).scrollTop();
 
 		$('#series_form').attr('action', '{{base_url}}edit_series/' + $(this).data("no"));
@@ -279,17 +278,17 @@
 		$("#series_audio_language").html($(this).data("audio"));
 
 		$('#series_languages').dropdown('clear');
-		var languages_array = eval($(this).data("languages"));
+		const languages_array = eval($(this).data("languages"));
 		$('#series_languages').dropdown('set selected',languages_array);
 
-		if ($(this).data("hearing-impaired") == "True") {
+		if ($(this).data("hearing-impaired") === "True") {
 			$("#series_hearing-impaired_div").checkbox('check');
 		} else {
 			$("#series_hearing-impaired_div").checkbox('uncheck');
 		}
 
 		$('.small.modal').modal('show');
-	})
+	});
 
 	$('#series_languages').dropdown();
 
@@ -302,7 +301,7 @@
 	});
 
 	$( ".progress" ).each(function() {
-		if ($(this).progress('is complete') != true) {
+		if ($(this).progress('is complete') !== true) {
 			$(this).addClass('yellow');
 		}
 		if ($(this).progress('get total') == 0) {

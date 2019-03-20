@@ -1,4 +1,4 @@
-<html>
+<html lang="en">
 	<head>
 		<!DOCTYPE html>
 		<script src="{{base_url}}static/jquery/jquery-latest.min.js"></script>
@@ -34,25 +34,27 @@
 					%line = log.split('|')
 					<tr class='log' data-message="\\
 %try:
-{{line[2]}}\\
+{{line[3]}}\\
 %except:
 \\
 %end
 " data-exception="\\
 %try:
-{{line[3]}}\\
+{{line[4]}}\\
 %except:
 \\
 %end
 ">
 						<td class="collapsing"><i class="\\
 %try:
-%if line[1] == 'INFO':
+%if line[1] == 'INFO    ':
 blue info circle icon \\
-%elif line[1] == 'WARNING':
+%elif line[1] == 'WARNING ':
 yellow warning circle icon \\
-%elif line[1] == 'ERROR':
+%elif line[1] == 'ERROR   ':
 red bug icon \\
+%elif line[1] == 'DEBUG   ':
+bug icon \\
 %end
 %except:
 %pass
@@ -60,7 +62,7 @@ red bug icon \\
 "></i></td>
 						<td>\\
 %try:
-{{line[2]}}\\
+{{line[3]}}\\
 %except:
 \\
 %end
@@ -103,17 +105,16 @@ red bug icon \\
 	$('.modal')
 		.modal({
 	    	autofocus: false
-		})
-	;
+		});
 
-	$('.log').click(function(){
+	$('.log').on('click', function(){
 		$("#message").html($(this).data("message"));
-		exception = $(this).data("exception");
+        let exception = $(this).data("exception");
 		exception = exception.replace(/'/g,"");
-		exception = exception.replace(/\\n\s\s\s\s/g, "\\n&emsp;&emsp;");
+        exception = exception.replace(/\\n\s\s\s\s/g, "\\n&emsp;&emsp;");
 		exception = exception.replace(/\\n\s\s/g, "\\n&emsp;");
-		exception = exception.replace(/\\n/g, "<br />")
+		exception = exception.replace(/\\n/g, "<br />");
 		$("#exception").html(exception);
 		$('#modal').modal('show');
-	})
+	});
 </script>

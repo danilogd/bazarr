@@ -1,4 +1,4 @@
-<html>
+<html lang="en">
 	<head>
 		<!DOCTYPE html>
 		<script src="{{base_url}}static/jquery/jquery-latest.min.js"></script>
@@ -9,7 +9,6 @@
 		<link rel="stylesheet" href="{{base_url}}static/semantic/semantic.css">
 		<link rel="stylesheet" type="text/css" href="{{base_url}}static/datatables/datatables.min.css"/>
 		<link rel="stylesheet" type="text/css" href="{{base_url}}static/datatables/semanticui.min.css"/>
-
 		
 		<link rel="apple-touch-icon" sizes="120x120" href="{{base_url}}static/apple-touch-icon.png">
 		<link rel="icon" type="image/png" sizes="32x32" href="{{base_url}}static/favicon-32x32.png">
@@ -37,21 +36,21 @@
 				margin-bottom: 3em;
 				padding: 2em;
 				border-radius: 1px;
-				box-shadow: 0px 0px 5px 5px #000000;
+				box-shadow: 0 0 5px 5px #000000;
 				min-height: calc(250px + 4em);
 			}
 			#fondblanc {
 				background-color: #ffffff;
 				opacity: 0.9;
 				border-radius: 1px;
-				box-shadow: 0px 0px 3px 3px #ffffff;
+				box-shadow: 0 0 3px 3px #ffffff;
 				margin-top: 32px;
 				margin-bottom: 3em;
 				padding-top: 2em;
 				padding-left: 2em;
 				padding-right: 2em;
 				padding-bottom: 1em;
-				overflow-x:auto;
+				overflow-x: auto;
 			}
 			.ui.basic.button:hover, .ui.basic.buttons .button:hover {
 				background: transparent !important;
@@ -78,11 +77,11 @@
 		</style>
 
 		<script>
-           	$(document).ready(function(){
+           	$(function(){
             	$('.ui.accordion').accordion();
-            	var first_season_acc_title = document.getElementsByClassName("title")[0];
+            	const first_season_acc_title = document.getElementsByClassName("title")[0];
             	first_season_acc_title.className += " active";
-            	var first_season_acc_content = document.getElementsByClassName("content")[0];
+            	const first_season_acc_content = document.getElementsByClassName("content")[0];
             	first_season_acc_content.className += " active";
             });
 		</script>
@@ -90,8 +89,9 @@
 	<body>
 		%import ast
 		%from get_languages import *
-		%from get_settings import *
-		%single_language = get_general_settings()[7]
+        %from config import settings
+        %from helper import path_replace
+		%single_language = settings.general.getboolean('single_language')
 		<div style="display: none;"><img src="{{base_url}}image_proxy{{details[3]}}"></div>
 		<div id='loader' class="ui page dimmer">
 		   	<div id="loader_text" class="ui indeterminate text loader">Loading...</div>
@@ -102,8 +102,8 @@
 			<div id="divdetails" class="ui container">
 				<img class="left floated ui image" style="max-height:250px;" src="{{base_url}}image_proxy{{details[2]}}">
 				<div class="ui right floated basic icon buttons">
-					<button id="scan_disk" class="ui button" data-tooltip="Scan disk for subtitles" data-inverted=""><i class="ui inverted large compact refresh icon"></i></button>
-					<button id="search_missing_subtitles" class="ui button" data-tooltip="Download missing subtitles" data-inverted=""><i class="ui inverted huge compact search icon"></i></button>
+					<button id="scan_disk" class="ui button" data-tooltip="Scan disk for subtitles"><i class="ui inverted large compact refresh icon"></i></button>
+					<button id="search_missing_subtitles" class="ui button" data-tooltip="Download missing subtitles"><i class="ui inverted huge compact search icon"></i></button>
 					<%
 					subs_languages = ast.literal_eval(str(details[7]))
 					subs_languages_list = []
@@ -113,7 +113,7 @@
 						end
 					end
 					%>
-					<button id="config" class="ui button" data-tooltip="Edit series" data-inverted="" data-tvdbid="{{details[5]}}" data-title="{{details[0]}}" data-poster="{{details[2]}}" data-audio="{{details[6]}}" data-languages="{{!subs_languages_list}}" data-hearing-impaired="{{details[4]}}"><i class="ui inverted large compact configure icon"></i></button>
+					<button id="config" class="ui button" data-tooltip="Edit series" data-tvdbid="{{details[5]}}" data-title="{{details[0]}}" data-poster="{{details[2]}}" data-audio="{{details[6]}}" data-languages="{{!subs_languages_list}}" data-hearing-impaired="{{details[4]}}"><i class="ui inverted large compact configure icon"></i></button>
 				</div>
 				<h2>{{details[0]}}</h2>
 				<p>{{details[1]}}</p>
@@ -165,7 +165,7 @@
 									<tr>
 										<th class="collapsing"></th>
 										<th class="collapsing">Episode</th>
-										<th>Title</th>
+                                       <th>Title</th>
 										<th class="collapsing">Existing<br>subtitles</th>
 										<th class="collapsing">Missing<br>subtitles</th>
 										<th class="collapsing">Manual<br>search</th>
@@ -176,13 +176,18 @@
 									<tr>
 										<td class="collapsing">
                                             %if episode[9] == 'True':
-                                            <span data-tooltip="Episode monitored in Sonarr"><i class="bookmark icon"></i></span>
+                                            <span data-tooltip="Episode monitored in Sonarr" data-inverted='' data-position="top left"><i class="bookmark icon"></i></span>
                                             %else:
-                                            <span data-tooltip="Episode unmonitored in Sonarr"><i class="bookmark outline icon"></i></span>
+                                            <span data-tooltip="Episode unmonitored in Sonarr" data-inverted='' data-position="top left"><i class="bookmark outline icon"></i></span>
                                             %end
                                         </td>
 										<td>{{episode[3]}}</td>
-										<td>{{episode[0]}}</td>
+										<td>
+											% if episode[8] is not None:
+											<span data-tooltip="Scenename is: {{episode[8]}}" data-inverted='' data-position="top left"><i class="info circle icon"></i></span>
+                                       	% end
+											<span data-tooltip="Path is: {{episode[1]}}" data-inverted='' data-position="top left">{{episode[0]}}</span>
+										</td>
 										<td>
 										%if episode[4] is not None:
 										%	actual_languages = ast.literal_eval(episode[4])
@@ -208,23 +213,42 @@
 										%end
 										</td>
 										<td>
-										%try:
-											%if episode[6] is not None:
-											%	missing_languages = ast.literal_eval(episode[6])
-                                            %   missing_languages.sort()
-											%else:
-											%	missing_languages = None
+                                        %try:
+                                        <%
+                                            if episode[6] is not None:
+                                                missing_languages = ast.literal_eval(episode[6])
+                                                missing_languages.sort()
+											end
+											if missing_languages is not None:
+                                                from get_subtitle import search_active
+                                                for language in missing_languages:
+                                                    if episode[10] is not None and settings.general.getboolean('adaptive_searching') and language in episode[10]:
+                                                        for lang in ast.literal_eval(episode[10]):
+                                                            if language in lang:
+                                                                if search_active(lang[1]):
+                                        %>
+                                                                    <a data-episodePath="{{episode[1]}}" data-scenename="{{episode[8]}}" data-language="{{alpha3_from_alpha2(str(language))}}" data-hi="{{details[4]}}" data-sonarrSeriesId="{{episode[5]}}" data-sonarrEpisodeId="{{episode[7]}}" class="get_subtitle ui tiny label">
+													                {{language}}
+                                                                    <i style="margin-left:3px; margin-right:0" class="search icon"></i>
+                                                                    </a>
+                                                                %else:
+                                                                    <a data-tooltip="Automatic searching delayed (adaptive search)" data-position="top right" data-inverted="" data-episodePath="{{episode[1]}}" data-scenename="{{episode[8]}}" data-language="{{alpha3_from_alpha2(str(language))}}" data-hi="{{details[4]}}" data-sonarrSeriesId="{{episode[5]}}" data-sonarrEpisodeId="{{episode[7]}}" class="get_subtitle ui tiny label">
+													                {{language}}
+                                                                    <i style="margin-left:3px; margin-right:0" class="search red icon"></i>
+                                                                    </a>
+                                                                %end
+                                                            %end
+                                                        %end
+                                                    %else:
+                                                        <a data-episodePath="{{episode[1]}}" data-scenename="{{episode[8]}}" data-language="{{alpha3_from_alpha2(str(language))}}" data-hi="{{details[4]}}" data-sonarrSeriesId="{{episode[5]}}" data-sonarrEpisodeId="{{episode[7]}}" class="get_subtitle ui tiny label">
+                                                            {{language}}
+                                                        <i style="margin-left:3px; margin-right:0" class="search icon"></i>
+                                                        </a>
+                                                    %end
+                                                %end
 											%end
-											%if missing_languages is not None:
-                                                %for language in missing_languages:
-                                                <a data-episodePath="{{episode[1]}}" data-scenename="{{episode[8]}}" data-language="{{alpha3_from_alpha2(str(language))}}" data-hi="{{details[4]}}" data-sonarrSeriesId="{{episode[5]}}" data-sonarrEpisodeId="{{episode[7]}}" class="get_subtitle ui tiny label">
-													{{language}}
-													<i style="margin-left:3px; margin-right:0px" class="search icon"></i>
-												</a>
-												%end
-											%end
-										%except:
-											%pass
+                                        %except:
+                                            %pass
 										%end
 										</td>
 										<td>
@@ -331,18 +355,21 @@
 </html>
 
 <script>
-	$('#scan_disk').click(function(){
+	$('#scan_disk').on('click', function(){
 		$('#loader_text').text("Scanning disk for existing subtitles...");
 		window.location = '{{base_url}}scan_disk/{{no}}';
-	})
+	});
 
-	$('#search_missing_subtitles').click(function(){
-		$('#loader_text').text("Searching for missing subtitles...");
-		window.location = '{{base_url}}search_missing_subtitles/{{no}}';
-	})
+	$('#search_missing_subtitles').on('click', function(){
+		$(this).addClass('disabled');
+		$(this).find('i:first').addClass('loading');
+	    $.ajax({
+            url: '{{base_url}}search_missing_subtitles/{{no}}'
+        })
+	});
 
-	$('.remove_subtitles').click(function(){
-		var values = {
+	$('.remove_subtitles').on('click', function(){
+		const values = {
 			episodePath: $(this).attr("data-episodePath"),
 			language: $(this).attr("data-language"),
 			subtitlesPath: $(this).attr("data-subtitlesPath"),
@@ -365,16 +392,17 @@
 		$(document).ajaxStop(function(){
 			window.location.reload();
 		});
-	})
+	});
 
-	$('.get_subtitle').click(function(){
-		var values = {
+	$('.get_subtitle').on('click', function(){
+		const values = {
 			episodePath: $(this).attr("data-episodePath"),
 			sceneName: $(this).attr("data-sceneName"),
 			language: $(this).attr("data-language"),
 			hi: $(this).attr("data-hi"),
 			sonarrSeriesId: $(this).attr('data-sonarrSeriesId'),
-			sonarrEpisodeId: $(this).attr('data-sonarrEpisodeId')
+			sonarrEpisodeId: $(this).attr('data-sonarrEpisodeId'),
+			title: "{{!details[0].replace("'", "\\'")}}"
 		};
 
 		$('#loader_text').text("Downloading subtitle to disk...");
@@ -391,19 +419,18 @@
 		$(document).ajaxStop(function(){
 			window.location.reload();
 		});
-	})
+	});
 
-	$('a:not(.manual_search), .menu .item, button:not(#config, .cancel)').click(function(){
+	$('a:not(.manual_search), .menu .item, button:not(#config, .cancel, #search_missing_subtitles)').on('click', function(){
 		$('#loader').addClass('active');
-	})
+	});
 
 	$('.modal')
 		.modal({
 			autofocus: false
-		})
-	;
+		});
 
-	$('#config').click(function(){
+	$('#config').on('click', function(){
 		$('#series_form').attr('action', '{{base_url}}edit_series/{{no}}');
 
 		$("#series_title").html($(this).data("title"));
@@ -412,10 +439,10 @@
 		$("#series_audio_language").html($(this).data("audio"));
 
 		$('#series_languages').dropdown('clear');
-		var languages_array = eval($(this).data("languages"));
+		const languages_array = eval($(this).data("languages"));
 		$('#series_languages').dropdown('set selected',languages_array);
 
-		if ($(this).data("hearing-impaired") == "True") {
+		if ($(this).data("hearing-impaired") === "True") {
 			$("#series_hearing-impaired_div").checkbox('check');
 		} else {
 			$("#series_hearing-impaired_div").checkbox('uncheck');
@@ -425,30 +452,30 @@
 			.modal({
 				centered: true
 			})
-			.modal('show')
-		;
-	})
+			.modal('show');
+	});
 
-	$('.manual_search').click(function(){
+	$('.manual_search').on('click', function(){
 		$("#series_title_span").html($(this).data("series_title"));
 		$("#season").html($(this).data("season"));
 		$("#episode").html($(this).data("episode"));
 		$("#episode_title").html($(this).data("episode_title"));
 
-		episodePath = $(this).attr("data-episodePath"),
-		sceneName = $(this).attr("data-sceneName"),
-		language = $(this).attr("data-language"),
-		hi = $(this).attr("data-hi"),
-		sonarrSeriesId = $(this).attr("data-sonarrSeriesId"),
-		sonarrEpisodeId = $(this).attr("data-sonarrEpisodeId")
+		episodePath = $(this).attr("data-episodePath");
+		sceneName = $(this).attr("data-sceneName");
+		language = $(this).attr("data-language");
+        hi = $(this).attr("data-hi");
+		sonarrSeriesId = $(this).attr("data-sonarrSeriesId");
+		sonarrEpisodeId = $(this).attr("data-sonarrEpisodeId");
 
-		var values = {
+		const values = {
 			episodePath: episodePath,
 			sceneName: sceneName,
 			language: language,
 			hi: hi,
 			sonarrSeriesId: sonarrSeriesId,
-			sonarrEpisodeId: sonarrEpisodeId
+			sonarrEpisodeId: sonarrEpisodeId,
+			title: "{{!details[0].replace("'", "\'")}}"
 		};
 
 		$('#search_result').DataTable( {
@@ -458,12 +485,13 @@
 				zeroRecords: 'No subtitles found for this episode'
 		    },
 		    paging: true,
+    		lengthChange: false,
+			pageLength: 5,
     		searching: false,
     		ordering: false,
     		processing: false,
         	serverSide: false,
-        	lengthMenu: [ [ 5, 10, 25, 50, 100 , -1 ] , [ 5, 10, 25, 50, 100, "All" ] ],
-    		ajax: {
+        	ajax: {
 				url: '{{base_url}}manual_search',
 				type: 'POST',
                 data: values
@@ -486,19 +514,19 @@
 				},
 				{ data: null,
 				render: function ( data, type, row ) {
-					var array_matches = data.matches;
-					var array_dont_matches = data.dont_matches;
-					var i;
-					text = '<div class="ui inline dropdown"><i class="green check icon"></i><div class="text">'
+					const array_matches = data.matches;
+					const array_dont_matches = data.dont_matches;
+					let i;
+					let text = '<div class="ui inline dropdown"><i class="green check icon"></i><div class="text">';
 					text += array_matches.length;
-					text += '</div><i class="dropdown icon"></i><div class="menu">'
+					text += '</div><i class="dropdown icon"></i><div class="menu">';
 					for (i = 0; i < array_matches.length; i++) {
 						text += '<div class="criteria_matched disabled item">' + array_matches[i] + '</div>';
 					}
 					text += '</div></div>';
-					text += '<div class="ui inline dropdown"><i class="red times icon"></i><div class="text">'
+					text += '<div class="ui inline dropdown"><i class="red times icon"></i><div class="text">';
 					text += array_dont_matches.length;
-					text += '</div><i class="dropdown icon"></i><div class="menu">'
+					text += '</div><i class="dropdown icon"></i><div class="menu">';
 					for (i = 0; i < array_dont_matches.length; i++) {
 						text += '<div class="criteria_not_matched disabled item">' + array_dont_matches[i] + '</div>';
 					}
@@ -518,12 +546,11 @@
 			.modal({
 				centered: false
 			})
-			.modal('show')
-		;
-	})
+			.modal('show');
+	});
 
 	function manual_get(button, episodePath, sceneName, hi, sonarrSeriesId, sonarrEpisodeId){
-		var values = {
+		const values = {
 				subtitle: $(button).attr("data-subtitle"),
 				provider: $(button).attr("data-provider"),
 				episodePath: episodePath,
@@ -531,7 +558,8 @@
 				language: $(button).attr("data-language"),
 				hi: hi,
 				sonarrSeriesId: sonarrSeriesId,
-				sonarrEpisodeId: sonarrEpisodeId
+				sonarrEpisodeId: sonarrEpisodeId,
+				title: "{{!details[0].replace("'", "\\'")}}"
 		};
 
 		$('#loader_text').text("Downloading subtitle to disk...");

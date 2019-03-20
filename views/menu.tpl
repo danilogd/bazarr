@@ -1,6 +1,8 @@
-<html>
+<html lang="en">
     <head>
         <!DOCTYPE html>
+		<link href="{{base_url}}static/noty/noty.css" rel="stylesheet">
+		<script src="{{base_url}}static/noty/noty.min.js" type="text/javascript"></script>
 		<style>
             #divmenu {
 				background-color: #000000;
@@ -17,25 +19,33 @@
 			.searchicon {
 				color: white !important;
 			}
+            div.disabled { pointer-events: none; }
+            button.disabled { pointer-events: none; }
         </style>
     </head>
     <body>
-		% from get_argv import config_dir
+		% from get_args import args
 
 		% import os
 		% import sqlite3
-        % from get_settings import get_general_settings
+        % from config import settings
 
-        %if get_general_settings()[24] is True:
-        %    monitored_only_query_string = ' AND monitored = "True"'
+        %if settings.sonarr.getboolean('only_monitored'):
+        %    monitored_only_query_string_sonarr = ' AND monitored = "True"'
         %else:
-        %    monitored_only_query_string = ""
+        %    monitored_only_query_string_sonarr = ""
         %end
 
-        % conn = sqlite3.connect(os.path.join(config_dir, 'db/bazarr.db'), timeout=30)
+        %if settings.radarr.getboolean('only_monitored'):
+        %    monitored_only_query_string_radarr = ' AND monitored = "True"'
+        %else:
+        %    monitored_only_query_string_radarr = ""
+        %end
+
+        % conn = sqlite3.connect(os.path.join(args.config_dir, 'db', 'bazarr.db'), timeout=30)
     	% c = conn.cursor()
-		% wanted_series = c.execute("SELECT COUNT(*) FROM table_episodes WHERE missing_subtitles != '[]'" + monitored_only_query_string).fetchone()
-		% wanted_movies = c.execute("SELECT COUNT(*) FROM table_movies WHERE missing_subtitles != '[]'" + monitored_only_query_string).fetchone()
+		% wanted_series = c.execute("SELECT COUNT(*) FROM table_episodes WHERE missing_subtitles != '[]'" + monitored_only_query_string_sonarr).fetchone()
+		% wanted_movies = c.execute("SELECT COUNT(*) FROM table_movies WHERE missing_subtitles != '[]'" + monitored_only_query_string_radarr).fetchone()
 
 		<div id="divmenu" class="ui container">
 			<div class="ui grid">
@@ -48,15 +58,15 @@
 						<div class="ui grid">
 								<div class="row">
 								<div class="sixteen wide column">
-									<div class="ui inverted borderless labeled icon massive menu six item">
+									<div class="ui inverted borderless labeled icon massive menu seven item">
 										<div class="ui container">
-											% if get_general_settings()[12] is True:
+											% if settings.general.getboolean('use_sonarr'):
 											<a class="item" href="{{base_url}}series">
 												<i class="play icon"></i>
 												Series
 											</a>
                                             % end
-											% if get_general_settings()[13] is True:
+											% if settings.general.getboolean('use_radarr'):
 											<a class="item" href="{{base_url}}movies">
 												<i class="film icon"></i>
 												Movies
@@ -68,12 +78,12 @@
 											</a>
 											<a class="item" href="{{base_url}}wanted">
 												<i class="warning sign icon">
-													% if get_general_settings()[12] is True:
+													% if settings.general.getboolean('use_sonarr'):
 													<div class="floating ui tiny yellow label" style="left:90% !important;top:0.5em !important;">
 														{{wanted_series[0]}}
 													</div>
 													% end
-													% if get_general_settings()[13] is True:
+													% if settings.general.getboolean('use_radarr'):
 													<div class="floating ui tiny green label" style="left:90% !important;top:3em !important;">
 														{{wanted_movies[0]}}
 													</div>
@@ -89,12 +99,16 @@
 												<i class="laptop icon"></i>
 												System
 											</a>
+											<a id="donate" class="item" href="https://beerpay.io/morpheus65535/bazarr">
+												<i class="red heart icon"></i>
+												Donate
+											</a>
 										</div>
 									</div>
 								</div>
 							</div>
 
-							<div style='padding-top:0rem;' class="row">
+							<div style='padding-top:0;' class="row">
 								<div class="three wide column"></div>
 
 								<div class="ten wide column">
@@ -133,7 +147,7 @@
             apiSettings: {
                 url: '{{base_url}}search_json/{query}',
                 onResponse: function(results) {
-                    var response = {
+                    const response = {
                         results : []
                     };
                     $.each(results.items, function(index, item) {
@@ -154,21 +168,21 @@
     	$('.menu').css('opacity', '0.8');
     	$('#divmenu').css('background', '#000000');
     	$('#divmenu').css('opacity', '0.8');
-    	$('#divmenu').css('box-shadow', '0px 0px 5px 5px #000000');
+    	$('#divmenu').css('box-shadow', '0 0 5px 5px #000000');
     }
     else if (window.location.href.indexOf("movie/") > -1) {
     	$('.menu').css('background', '#000000');
     	$('.menu').css('opacity', '0.8');
     	$('#divmenu').css('background', '#000000');
     	$('#divmenu').css('opacity', '0.8');
-    	$('#divmenu').css('box-shadow', '0px 0px 5px 5px #000000');
+    	$('#divmenu').css('box-shadow', '0 0 5px 5px #000000');
     }
     else {
     	$('.menu').css('background', '#272727');
     	$('#divmenu').css('background', '#272727');
     }
 
-    $('#restart_link').click(function(){
+    $('#restart_link').on('click', function(){
 		$('#loader_text').text("Bazarr is restarting, please wait...");
 		$.ajax({
 			url: "{{base_url}}restart",
@@ -177,14 +191,15 @@
 		.done(function(){
     		setTimeout(function(){ setInterval(ping, 2000); },8000);
 		});
-	})
+	});
 
-	% from get_settings import get_general_settings
-	% ip = get_general_settings()[0]
-	% port = get_general_settings()[1]
-	% base_url = get_general_settings()[2]
+	% from config import settings
+    % from get_args import args
+	% ip = settings.general.ip
+	% port = args.port if args.port else settings.general.port
+	% base_url = settings.general.base_url
 
-	if ("{{ip}}" == "0.0.0.0") {
+	if ("{{ip}}" === "0.0.0.0") {
 		public_ip = window.location.hostname;
 	} else {
 		public_ip = "{{ip}}";
@@ -192,7 +207,7 @@
 
 	protocol = window.location.protocol;
 
-	if (window.location.port == '{{current_port}}') {
+	if (window.location.port === '{{current_port}}') {
 	    public_port = '{{port}}';
     } else {
         public_port = window.location.port;
@@ -206,4 +221,135 @@
 			}
 		});
 	}
+</script>
+
+<script type="text/javascript">
+	var url_notifications = location.protocol +"//" + window.location.host + "{{base_url}}notifications";
+	var notificationTimeout;
+	var timeout;
+	var killer;
+	function doNotificationsAjax() {
+        $.ajax({
+            url: url_notifications,
+            success: function (data) {
+            	if (data !== "") {
+					data = JSON.parse(data);
+					var msg = data[0];
+					var type = data[1];
+					var duration = data[2];
+					var button = data[3];
+					var queue = data[4];
+
+					if (duration === 'temporary') {
+						timeout = 3000;
+						killer = queue;
+					} else {
+						timeout = false;
+						killer = false;
+					}
+
+					if (button === 'refresh') {
+						button = [ Noty.button('Refresh', 'ui tiny primary button', function () { window.location.reload() }) ];
+					} else if (button === 'restart') {
+						// to be completed
+						button = [ Noty.button('Restart', 'ui tiny primary button', function () { alert('Restart not implemented yet!') }) ];
+					} else {
+						button = [];
+					}
+
+					new Noty({
+						text: msg,
+						progressBar: false,
+						animation: {
+							open: null,
+							close: null
+						},
+						type: type,
+						layout: 'bottomRight',
+						theme: 'semanticui',
+						queue: queue,
+						timeout: timeout,
+							killer: killer,
+						buttons: button,
+						force: true
+					}).show();
+				}
+            },
+            complete: function (data) {
+                // Schedule the next
+                if (data !== "") {
+                	notificationTimeout = setTimeout(doNotificationsAjax, 100);
+				} else {
+                	notificationTimeout = setTimeout(doNotificationsAjax, 1000);
+				}
+            }
+        });
+    }
+    notificationTimeout = setTimeout(doNotificationsAjax, 1000);
+
+	$(window).bind('beforeunload', function(){
+		clearTimeout(notificationTimeout);
+	});
+</script>
+
+
+<script type="text/javascript">
+	var url_tasks = location.protocol +"//" + window.location.host + "{{base_url}}running_tasks";
+	var tasksTimeout;
+	function doTasksAjax() {
+        $.ajax({
+            url: url_tasks,
+            dataType: 'json',
+            success: function (data) {
+            	$('#tasks > tbody  > tr').each(function() {
+					if ($.inArray($(this).attr('id'), data['tasks']) > -1) {
+					    $(this).find('td:last').find('div:first').addClass('disabled');
+						$(this).find('td:last').find('div:first').find('i:first').addClass('loading');
+					} else {
+						$(this).find('td:last').find('div:first').removeClass('disabled');
+						$(this).find('td:last').find('div:first').find('i:first').removeClass('loading');
+					}
+				});
+
+            	if ($.inArray('wanted_search_missing_subtitles', data['tasks']) > -1) {
+                    $('#wanted_search_missing_subtitles').addClass('disabled');
+                    $('#wanted_search_missing_subtitles_movies').addClass('disabled');
+                    $('#wanted_search_missing_subtitles').find('i:first').addClass('loading');
+                    $('#wanted_search_missing_subtitles_movies').find('i:first').addClass('loading');
+                } else {
+                    $('#wanted_search_missing_subtitles').removeClass('disabled');
+                    $('#wanted_search_missing_subtitles_movies').removeClass('disabled');
+                    $('#wanted_search_missing_subtitles').find('i:first').removeClass('loading');
+                    $('#wanted_search_missing_subtitles_movies').find('i:first').removeClass('loading');
+                }
+
+                %if 'no' in locals():
+            	if ($.inArray('search_missing_subtitles_{{no}}', data['tasks']) > -1) {
+                    $('#search_missing_subtitles').addClass('disabled');
+                    $('#search_missing_subtitles').find('i:first').addClass('loading');
+                } else {
+                    $('#search_missing_subtitles').removeClass('disabled');
+                    $('#search_missing_subtitles').find('i:first').removeClass('loading');
+                }
+
+            	if ($.inArray('search_missing_subtitles_movie_{{no}}', data['tasks']) > -1) {
+                    $('#search_missing_subtitles_movie').addClass('disabled');
+                    $('#search_missing_subtitles_movie').find('i:first').addClass('loading');
+                } else {
+                    $('#search_missing_subtitles_movie').removeClass('disabled');
+                    $('#search_missing_subtitles_movie').find('i:first').removeClass('loading');
+                }
+            	%end
+            },
+            complete: function (data) {
+                // Schedule the next
+                tasksTimeout = setTimeout(doTasksAjax, 5000);
+            }
+        });
+    }
+    tasksTimeout = setTimeout(doTasksAjax, 500);
+
+	$(window).bind('beforeunload', function(){
+		clearTimeout(tasksTimeout);
+	});
 </script>

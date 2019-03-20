@@ -1,4 +1,4 @@
-<html>
+<html lang="en">
 	<head>
 		<!DOCTYPE html>
 		<script src="{{base_url}}static/jquery/jquery-latest.min.js"></script>
@@ -23,8 +23,8 @@
 			}
 			#fondblanc {
 				background-color: #ffffff;
-				border-radius: 0px;
-				box-shadow: 0px 0px 5px 5px #ffffff;
+				border-radius: 0;
+				box-shadow: 0 0 5px 5px #ffffff;
 				margin-top: 32px;
 				margin-bottom: 3em;
 				padding: 1em;
@@ -49,15 +49,20 @@
 			<div class="ui basic icon buttons" style="float: right;">
 				<div id="shutdown" class="ui icon button" data-tooltip="Shutdown" data-inverted=""><i class="red power off icon"></i></div>
 				<div id="restart" class="ui icon button" data-tooltip="Restart" data-inverted=""><i class="redo alternate icon"></i></div>
+                % from config import settings
+                % if settings.auth.type != "None":
+                    <div id="logout" class="ui icon button" data-tooltip="Logout" data-inverted=""><i class="sign-out icon"></i></div>
+                % end
 			</div>
 			<div class="ui top attached tabular menu">
 				<a class="tabs item active" data-tab="tasks">Tasks</a>
 				<a class="tabs item" data-tab="logs">Logs</a>
+                <a class="tabs item" data-tab="status">Status</a>
 				<a class="tabs item" data-tab="releases">Releases</a>
 			</div>
 			<div class="ui bottom attached tab segment active" data-tab="tasks">
 				<div class="content">
-					<table class="ui very basic selectable table">
+					<table class="ui very basic selectable table" id="tasks">
 						<thead>
 							<tr>
 								<th>Name</th>
@@ -68,7 +73,7 @@
 						</thead>
 						<tbody>
 						%for task in task_list:
-							<tr>
+							<tr id="{{task[3]}}">
 								<td>{{task[0]}}</td>
 								<td>{{task[1]}}</td>
 								<td>{{task[2]}}</td>
@@ -115,6 +120,143 @@
                     %end
 				</div>
 			</div>
+            <div class="ui bottom attached tab segment" data-tab="status">
+				<div class="ui dividing header">About</div>
+                <div class="twelve wide column">
+                    <div class="ui grid">
+                        <div class="middle aligned row">
+                            <div class="right aligned four wide column">
+                                <label>Bazarr version</label>
+                            </div>
+                            <div class="five wide column">
+                                <div class='field'>
+                                    <div class="ui fluid input">
+                                        {{bazarr_version}}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        % if settings.general.getboolean('use_sonarr'):
+                        <div class="middle aligned row">
+                            <div class="right aligned four wide column">
+                                <label>Sonarr version</label>
+                            </div>
+                            <div class="five wide column">
+                                <div class='field'>
+                                    <div class="ui fluid input">
+                                        {{sonarr_version}}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        % end
+                        % if settings.general.getboolean('use_radarr'):
+                        <div class="middle aligned row">
+                            <div class="right aligned four wide column">
+                                <label>Radarr version</label>
+                            </div>
+                            <div class="five wide column">
+                                <div class='field'>
+                                    <div class="ui fluid input">
+                                        {{radarr_version}}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        % end
+                        <div class="middle aligned row">
+                            <div class="right aligned four wide column">
+                                <label>Operating system</label>
+                            </div>
+                            <div class="five wide column">
+                                <div class='field'>
+                                    <div class="ui fluid input">
+                                        {{operating_system}}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="middle aligned row">
+                            <div class="right aligned four wide column">
+                                <label>Python version</label>
+                            </div>
+                            <div class="five wide column">
+                                <div class='field'>
+                                    <div class="ui fluid input">
+                                        {{python_version}}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="middle aligned row">
+                            <div class="right aligned four wide column">
+                                <label>Bazarr directory</label>
+                            </div>
+                            <div class="five wide column">
+                                <div class='field'>
+                                    <div class="ui fluid input">
+                                        {{bazarr_dir}}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="middle aligned row">
+                            <div class="right aligned four wide column">
+                                <label>Bazarr config directory</label>
+                            </div>
+                            <div class="five wide column">
+                                <div class='field'>
+                                    <div class="ui fluid input">
+                                        {{config_dir}}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="ui dividing header">More info</div>
+                <div class="twelve wide column">
+                    <div class="ui grid">
+                        <div class="middle aligned row">
+                            <div class="right aligned four wide column">
+                                <label>Source</label>
+                            </div>
+                            <div class="five wide column">
+                                <div class='field'>
+                                    <div class="ui fluid input">
+                                        <i class="github icon"></i><a href="https://github.com/morpheus65535/bazarr" target="_blank">Bazarr on GitHub</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="middle aligned row">
+                            <div class="right aligned four wide column">
+                                <label>Wiki</label>
+                            </div>
+                            <div class="five wide column">
+                                <div class='field'>
+                                    <div class="ui fluid input">
+                                        <i class="wikipedia w icon"></i><a href="https://github.com/morpheus65535/bazarr/wiki" target="_blank">Bazarr Wiki</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="middle aligned row">
+                            <div class="right aligned four wide column">
+                                <label>Discord</label>
+                            </div>
+                            <div class="five wide column">
+                                <div class='field'>
+                                    <div class="ui fluid input">
+                                        <i class="discord icon"></i><a href="https://discord.gg/MH2e2eb" target="_blank">Bazarr on Discord</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+			</div>
 
 			<div class="ui bottom attached tab segment" data-tab="releases">
 				%for release in releases:
@@ -149,8 +291,7 @@
 
 <script>
 	$('.menu .item')
-		.tab()
-	;
+		.tab();
 
 	function loadURL(page) {
 		$.ajax({
@@ -179,40 +320,48 @@
 
 	loadURL(1);
 
-	$('.backward').click(function(){
+	$('.backward').on('click', function(){
 		loadURL(current_page - 1);
-	})
-	$('.fast.backward').click(function(){
+	});
+	$('.fast.backward').on('click', function(){
 		loadURL(1);
-	})
-	$('.forward').click(function(){
+	});
+	$('.forward').on('click', function(){
 		loadURL(current_page + 1);
-	})
-	$('.fast.forward').click(function(){
+	});
+	$('.fast.forward').on('click', function(){
 		loadURL({{int(max_page)}});
-	})
+	});
 
-	$('#refresh_log').click(function(){
+	$('#refresh_log').on('click', function(){
 		loadURL(current_page);
-	})
+	});
 
-	$('#download_log').click(function(){
+	$('#download_log').on('click', function(){
 		window.location = '{{base_url}}bazarr.log';
-	})
+	});
 
-	$('#empty_log').click(function(){
+	$('#empty_log').on('click', function(){
 		window.location = '{{base_url}}emptylog';
-	})
+	});
 
-	$('.execute').click(function(){
-		window.location = '{{base_url}}execute/' + $(this).data("taskid");
-	})
+	$('.execute').on('click', function(){
+	    $(this).addClass('disabled');
+		$(this).find('i:first').addClass('loading');
+	    $.ajax({
+            url: '{{base_url}}execute/' + $(this).data("taskid")
+        })
+	});
 
-	$('a:not(.tabs), button:not(.cancel, #download_log), #restart').click(function(){
+	$('a:not(.tabs), button:not(.cancel, #download_log), #restart').on('click', function(){
 		$('#loader').addClass('active');
-	})
+	});
 
-	$('#shutdown').click(function(){
+    $('a[target="_blank"]').on('click', function(){
+        $('#loader').removeClass('active');
+    });
+
+	$('#shutdown').on('click', function(){
 		$.ajax({
 			url: "{{base_url}}shutdown",
 			async: false
@@ -222,9 +371,13 @@
 			document.write('Bazarr has shutdown.');
 			document.close();
 		});
-	})
+	});
 
-	$('#restart').click(function(){
+    $('#logout').on('click', function(){
+		window.location = '{{base_url}}logout';
+	});
+
+	$('#restart').on('click', function(){
 		$('#loader_text').text("Bazarr is restarting, please wait...");
 		$.ajax({
 			url: "{{base_url}}restart",
@@ -232,15 +385,16 @@
 		})
 		.done(function(){
     		setTimeout(function(){ setInterval(ping, 2000); },8000);
-		});
-	})
+		})
+	});
 
-	% from get_settings import get_general_settings
-	% ip = get_general_settings()[0]
-	% port = get_general_settings()[1]
-	% base_url = get_general_settings()[2]
+    % from config import settings
+    % from get_args import args
+	% ip = settings.general.ip
+	% port = args.port if args.port else settings.general.port
+	% base_url = settings.general.base_url
 
-	if ("{{ip}}" == "0.0.0.0") {
+	if ("{{ip}}" === "0.0.0.0") {
 		public_ip = window.location.hostname;
 	} else {
 		public_ip = "{{ip}}";
@@ -248,7 +402,7 @@
 
 	protocol = window.location.protocol;
 
-	if (window.location.port == '{{current_port}}') {
+	if (window.location.port === '{{current_port}}') {
 	    public_port = '{{port}}';
     } else {
         public_port = window.location.port;

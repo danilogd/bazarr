@@ -1,4 +1,4 @@
-<html>
+<html lang="en">
 	<head>
 		<!DOCTYPE html>
 		<script src="{{base_url}}static/jquery/jquery-latest.min.js"></script>
@@ -23,15 +23,12 @@
 			}
 			#fondblanc {
 				background-color: #ffffff;
-				border-radius: 0px;
-				box-shadow: 0px 0px 5px 5px #ffffff;
+				border-radius: 0;
+				box-shadow: 0 0 5px 5px #ffffff;
 				margin-top: 32px;
 				margin-bottom: 3em;
 				padding: 1em;
 				overflow-x:auto;
-			}
-			#logs {
-				margin-top: 4em;
 			}
 			.fast.backward, .backward, .forward, .fast.forward {
     			cursor: pointer;
@@ -50,14 +47,12 @@
 		</div>
 		% include('menu.tpl')
 
-        % from get_argv import config_dir
-        % import os
-		% from get_settings import get_general_settings
+		% from config import settings
 
 		<div id="fondblanc" class="ui container">
 			<div class="ui top attached tabular menu">
-				<a id="series_tab" class="tabs item active" data-enabled="{{get_general_settings()[12]}}" data-tab="series">Series</a>
-				<a id="movies_tab" class="tabs item" data-enabled="{{get_general_settings()[13]}}" data-tab="movies">Movies</a>
+				<a id="series_tab" class="tabs item active" data-enabled="{{settings.general.getboolean('use_sonarr')}}" data-tab="series">Series</a>
+				<a id="movies_tab" class="tabs item" data-enabled="{{settings.general.getboolean('use_radarr')}}" data-tab="movies">Movies</a>
 			</div>
 			<div class="ui bottom attached tab segment" data-tab="series">
 				<div class="content">
@@ -77,16 +72,15 @@
 
 <script>
 	$('.menu .item')
-		.tab()
-	;
+		.tab();
 
-	$('#series_tab').click(function() {
+	$('#series_tab').on('click', function() {
 	    loadURLseries(1);
-	})
+	});
 
-	$('#movies_tab').click(function() {
+	$('#movies_tab').on('click', function() {
 	    loadURLmovies(1);
-	})
+	});
 
 	function loadURLseries(page) {
 		$.ajax({
@@ -110,25 +104,25 @@
 	    });
 	}
 
-	$('a:not(.tabs), button:not(.cancel, #download_log)').click(function(){
+	$('a:not(.tabs), button:not(.cancel, #download_log)').on('click', function(){
 		$('#loader').addClass('active');
-	})
+	});
 
-	if ($('#series_tab').data("enabled") == "True") {
+	if ($('#series_tab').data("enabled") === "True") {
         $("#series_tab").removeClass('disabled');
     } else {
         $("#series_tab").addClass('disabled');
     }
 
-    if ($('#movies_tab').data("enabled") == "True") {
+    if ($('#movies_tab').data("enabled") === "True") {
         $("#movies_tab").removeClass('disabled');
     } else {
         $("#movies_tab").addClass('disabled');
     }
-	if ($('#series_tab').data("enabled") == "True") {
+	if ($('#series_tab').data("enabled") === "True") {
         $( "#series_tab" ).trigger( "click" );
     }
-    if ($('#series_tab').data("enabled") == "False" && $('#movies_tab').data("enabled") == "True") {
+    if ($('#series_tab').data("enabled") === "False" && $('#movies_tab').data("enabled") === "True") {
         $( "#movies_tab" ).trigger( "click" );
     }
 </script>

@@ -1,4 +1,4 @@
-<html>
+<html lang="en">
 	<head>
 		<!DOCTYPE html>
 		<script src="{{base_url}}static/jquery/jquery-latest.min.js"></script>
@@ -36,14 +36,14 @@
 				margin-bottom: 3em;
 				padding: 2em;
 				border-radius: 1px;
-				box-shadow: 0px 0px 5px 5px #000000;
+				box-shadow: 0 0 5px 5px #000000;
 				min-height: calc(250px + 4em);
 			}
 			#fondblanc {
 				background-color: #ffffff;
 				opacity: 0.9;
 				border-radius: 1px;
-				box-shadow: 0px 0px 3px 3px #ffffff;
+				box-shadow: 0 0 3px 3px #ffffff;
 				margin-top: 32px;
 				margin-bottom: 3em;
 				padding-top: 2em;
@@ -80,8 +80,9 @@
 	<body>
 		%import ast
 		%from get_languages import *
-		%from get_settings import *
-		%single_language = get_general_settings()[7]
+        %from config import settings
+        %from helper import path_replace_movie
+		%single_language = settings.general.getboolean('single_language')
 		<div style="display: none;"><img src="{{base_url}}image_proxy_movies{{details[3]}}"></div>
 		<div id='loader' class="ui page dimmer">
 		   	<div id="loader_text" class="ui indeterminate text loader">Loading...</div>
@@ -93,7 +94,7 @@
 				<img class="left floated ui image" style="max-height:250px;" src="{{base_url}}image_proxy_movies{{details[2]}}">
 				<div class="ui right floated basic icon buttons">
 					<button id="scan_disk" class="ui button" data-tooltip="Scan disk for subtitles" data-inverted=""><i class="ui inverted large compact refresh icon"></i></button>
-					<button id="search_missing_subtitles" class="ui button" data-tooltip="Download missing subtitles" data-inverted=""><i class="ui inverted huge compact search icon"></i></button>
+					<button id="search_missing_subtitles_movie" class="ui button" data-tooltip="Download missing subtitles" data-inverted=""><i class="ui inverted huge compact search icon"></i></button>
 					<%
 					subs_languages = ast.literal_eval(str(details[7]))
 					subs_languages_list = []
@@ -120,6 +121,9 @@
 				<p style='margin-top: 3em;'>
 					<div class="ui tiny inverted label" style='background-color: #777777;'>{{details[6]}}</div>
 					<div class="ui tiny inverted label" style='background-color: #35c5f4;'>{{details[8]}}</div>
+					% if details[12] is not None:
+					<div class="ui tiny inverted label" style='background-color: orange;'>{{details[12]}}</div>
+					% end
 				</p>
 				<p style='margin-top: 2em;'>
 					%for language in subs_languages_list:
@@ -167,7 +171,12 @@
 						</tbody>
 					</table>
 					<%
-					missing_subs_languages = ast.literal_eval(str(details[11]))
+					if details[11] is not None:
+						missing_subs_languages = ast.literal_eval(details[11])
+					else:
+						missing_subs_languages = []
+					end
+                	from get_subtitle import search_active
 					if missing_subs_languages is not None:
 					%>
 					<table class="ui very basic single line selectable table">
@@ -179,12 +188,32 @@
 					</table>
 					<%
 						for missing_subs_language in missing_subs_languages:
+						    if details[14] is not None and settings.general.getboolean('adaptive_searching') and missing_subs_language in details[14]:
+                                for lang in ast.literal_eval(details[14]):
+                                    if missing_subs_language in lang:
+                                        if search_active(lang[1]):
 					%>
 							<a class="get_subtitle ui small blue label" data-moviePath="{{details[8]}}" data-scenename="{{details[12]}}" data-language="{{alpha3_from_alpha2(str(missing_subs_language))}}" data-hi="{{details[4]}}" data-radarrId={{details[10]}}>
 								{{language_from_alpha2(str(missing_subs_language))}}
-								<i style="margin-left:3px; margin-right:0px" class="search icon"></i>
+								<i style="margin-left:3px; margin-right:0" class="search icon"></i>
+							</a>
+                                        %else:
+                            <a data-tooltip="Automatic searching delayed (adaptive search)" data-position="top left" data-inverted="" class="get_subtitle ui small red label" data-moviePath="{{details[8]}}" data-scenename="{{details[12]}}" data-language="{{alpha3_from_alpha2(str(missing_subs_language))}}" data-hi="{{details[4]}}" data-radarrId={{details[10]}}>
+								{{language_from_alpha2(str(missing_subs_language))}}
+								<i style="margin-left:3px; margin-right:0" class="search icon"></i>
 							</a>
 					<%
+                                        end
+                                    end
+                                end
+                            else:
+                    %>
+                            <a class="get_subtitle ui small blue label" data-moviePath="{{details[8]}}" data-scenename="{{details[12]}}" data-language="{{alpha3_from_alpha2(str(missing_subs_language))}}" data-hi="{{details[4]}}" data-radarrId={{details[10]}}>
+								{{language_from_alpha2(str(missing_subs_language))}}
+								<i style="margin-left:3px; margin-right:0" class="search icon"></i>
+							</a>
+                    <%
+                            end
 						end
 					end
 					%>
@@ -220,6 +249,9 @@
 									<div class="nine wide column">
 										<select name="languages" id="movie_languages" {{!'multiple="" ' if single_language is False else ''}} class="ui fluid selection dropdown">
 											<option value="">Languages</option>
+											%if single_language:
+                                        	<option value="None">None</option>
+                                        	%end
 											%for language in languages:
 											<option value="{{language[0]}}">{{language[1]}}</option>
 											%end
@@ -277,18 +309,21 @@
 </html>
 
 <script>
-	$('#scan_disk').click(function(){
+	$('#scan_disk').on('click', function(){
 		$('#loader_text').text("Scanning disk for existing subtitles...");
 		window.location = '{{base_url}}scan_disk_movie/{{no}}';
-	})
+	});
 
-	$('#search_missing_subtitles').click(function(){
-		$('#loader_text').text("Searching for missing subtitles...");
-		window.location = '{{base_url}}search_missing_subtitles_movie/{{no}}';
-	})
+	$('#search_missing_subtitles_movie').on('click', function(){
+		$(this).addClass('disabled');
+		$(this).find('i:first').addClass('loading');
+	    $.ajax({
+            url: '{{base_url}}search_missing_subtitles_movie/{{no}}'
+        })
+	});
 
-	$('.remove_subtitles').click(function(){
-		var values = {
+	$('.remove_subtitles').on('click', function(){
+		const values = {
 			moviePath: $(this).attr("data-moviePath"),
 			language: $(this).attr("data-language"),
 			subtitlesPath: $(this).attr("data-subtitlesPath"),
@@ -310,16 +345,17 @@
 		$(document).ajaxStop(function(){
 			window.location.reload();
 		});
-	})
+	});
 
-	$('.get_subtitle').click(function(){
-		var values = {
+	$('.get_subtitle').on('click', function(){
+		const values = {
 			moviePath: $(this).attr("data-moviePath"),
 			sceneName: $(this).attr("data-sceneName"),
 			language: $(this).attr("data-language"),
 			hi: $(this).attr("data-hi"),
 			radarrId: $(this).attr("data-radarrId"),
-			tmdbid: {{tmdbid}}
+			tmdbid: {{tmdbid}},
+			title: "{{!details[0].replace("'", "\\'")}}"
 		};
 
 		$('#loader_text').text("Downloading subtitle to disk...");
@@ -336,19 +372,18 @@
 		$(document).ajaxStop(function(){
 			window.location.reload();
 		});
-	})
+	});
 
-	$('a, .menu .item, button:not(#config, .cancel, .manual_search)').click(function(){
+	$('a, .menu .item, button:not(#config, .cancel, .manual_search, #search_missing_subtitles_movie)').on('click', function(){
 		$('#loader').addClass('active');
-	})
+	});
 
 	$('.modal')
 		.modal({
 			autofocus: false
-		})
-	;
+		});
 
-	$('#config').click(function(){
+	$('#config').on('click', function(){
 		$('#movie_form').attr('action', '{{base_url}}edit_movie/{{no}}');
 
 		$("#movie_title").html($(this).data("title"));
@@ -357,10 +392,10 @@
 		$("#movie_audio_language").html($(this).data("audio"));
 
 		$('#movie_languages').dropdown('clear');
-		var languages_array = eval($(this).data("languages"));
+		const languages_array = eval($(this).data("languages"));
 		$('#movie_languages').dropdown('set selected',languages_array);
 
-		if ($(this).data("hearing-impaired") == "True") {
+		if ($(this).data("hearing-impaired") === "True") {
 			$("#movie_hearing-impaired_div").checkbox('check');
 		} else {
 			$("#movie_hearing-impaired_div").checkbox('uncheck');
@@ -370,25 +405,25 @@
 			.modal({
 				centered: true
 			})
-			.modal('show')
-		;
-	})
+			.modal('show');
+	});
 
-	$('.manual_search').click(function(){
+	$('.manual_search').on('click', function(){
 		$("#movie_title_span").html($(this).data("movie_title"));
 
-		moviePath = $(this).attr("data-moviePath"),
-		sceneName = $(this).attr("data-sceneName"),
-		language = $(this).attr("data-language"),
-		hi = $(this).attr("data-hi"),
-		radarrId = $(this).attr("data-radarrId")
+		moviePath = $(this).attr("data-moviePath");
+		sceneName = $(this).attr("data-sceneName");
+		language = $(this).attr("data-language");
+		hi = $(this).attr("data-hi");
+		radarrId = $(this).attr("data-radarrId");
 
-		var values = {
+		const values = {
 			moviePath: moviePath,
 			sceneName: sceneName,
 			language: language,
 			hi: hi,
-			radarrId: radarrId
+			radarrId: radarrId,
+			title: "{{!details[0].replace("'", "\'")}}"
 		};
 
 		$('#search_result').DataTable( {
@@ -398,12 +433,13 @@
 				zeroRecords: 'No subtitles found for this movie'
 		    },
 		    paging: true,
+			lengthChange: false,
+			pageLength: 5,
     		searching: false,
     		ordering: false,
     		processing: false,
         	serverSide: false,
-        	lengthMenu: [ [ 5, 10, 25, 50, 100 , -1 ] , [ 5, 10, 25, 50, 100, "All" ] ],
-    		ajax: {
+        	ajax: {
 				url: '{{base_url}}manual_search_movie',
 				type: 'POST',
                 data: values
@@ -426,19 +462,19 @@
 				},
 				{ data: null,
 				render: function ( data, type, row ) {
-					var array_matches = data.matches;
-					var array_dont_matches = data.dont_matches;
-					var i;
-					text = '<div class="ui inline dropdown"><i class="green check icon"></i><div class="text">'
+					const array_matches = data.matches;
+					const array_dont_matches = data.dont_matches;
+					let i;
+					let text = '<div class="ui inline dropdown"><i class="green check icon"></i><div class="text">';
 					text += array_matches.length;
-					text += '</div><i class="dropdown icon"></i><div class="menu">'
+					text += '</div><i class="dropdown icon"></i><div class="menu">';
 					for (i = 0; i < array_matches.length; i++) {
 						text += '<div class="criteria_matched disabled item">' + array_matches[i] + '</div>';
 					}
 					text += '</div></div>';
-					text += '<div class="ui inline dropdown"><i class="red times icon"></i><div class="text">'
+					text += '<div class="ui inline dropdown"><i class="red times icon"></i><div class="text">';
 					text += array_dont_matches.length;
-					text += '</div><i class="dropdown icon"></i><div class="menu">'
+					text += '</div><i class="dropdown icon"></i><div class="menu">';
 					for (i = 0; i < array_dont_matches.length; i++) {
 						text += '<div class="criteria_not_matched disabled item">' + array_dont_matches[i] + '</div>';
 					}
@@ -460,17 +496,18 @@
 			})
 			.modal('show')
 		;
-	})
+	});
 
-	function manual_get(button, episodePath, sceneName, hi, sonarrSeriesId, sonarrEpisodeId){
-		var values = {
+	function manual_get(button, episodePath, sceneName, hi){
+		const values = {
 				subtitle: $(button).attr("data-subtitle"),
 				provider: $(button).attr("data-provider"),
 				moviePath: moviePath,
 				sceneName: sceneName,
 				language: $(button).attr("data-language"),
 				hi: hi,
-				radarrId: radarrId
+				radarrId: radarrId,
+				title: "{{!details[0].replace("'", "\\'")}}"
 		};
 
 		$('#loader_text').text("Downloading subtitle to disk...");

@@ -1,67 +1,141 @@
-from get_argv import config_dir
-
-import sqlite3
+# coding=utf-8
 import os
-from subliminal import provider_manager
-import collections
+import datetime
+import logging
+import subliminal_patch
 
-def load_providers():
-    # Get providers list from subliminal
-    providers_list = sorted(provider_manager.names())
+from get_args import args
+from config import settings
+from subliminal_patch.exceptions import TooManyRequests, APIThrottled
+from subliminal.exceptions import DownloadLimitExceeded, ServiceUnavailable
 
-    # Open database connection
-    db = sqlite3.connect(os.path.join(config_dir, 'db/bazarr.db'), timeout=30)
-    c = db.cursor()
+VALID_THROTTLE_EXCEPTIONS = (TooManyRequests, DownloadLimitExceeded, ServiceUnavailable, APIThrottled)
 
-    # Remove unsupported providers
-    providers_in_db = c.execute('SELECT name FROM table_settings_providers').fetchall()
-    for provider_in_db in providers_in_db:
-        if provider_in_db[0] not in providers_list:
-            c.execute('DELETE FROM table_settings_providers WHERE name = ?', (provider_in_db[0], ))
+PROVIDER_THROTTLE_MAP = {
+    "default": {
+        TooManyRequests: (datetime.timedelta(hours=1), "1 hour"),
+        DownloadLimitExceeded: (datetime.timedelta(hours=3), "3 hours"),
+        ServiceUnavailable: (datetime.timedelta(minutes=20), "20 minutes"),
+        APIThrottled: (datetime.timedelta(minutes=10), "10 minutes"),
+    },
+    "opensubtitles": {
+        TooManyRequests: (datetime.timedelta(hours=3), "3 hours"),
+        DownloadLimitExceeded: (datetime.timedelta(hours=6), "6 hours"),
+        APIThrottled: (datetime.timedelta(seconds=15), "15 seconds"),
+    },
+    "addic7ed": {
+        DownloadLimitExceeded: (datetime.timedelta(hours=3), "3 hours"),
+        TooManyRequests: (datetime.timedelta(minutes=5), "5 minutes"),
+    }
+}
 
-    # Commit changes to database table
-    db.commit()
+PROVIDERS_FORCED_OFF = ["addic7ed", "tvsubtitles", "legendastv", "napiprojekt", "shooter", "hosszupuska",
+                        "supersubtitles", "titlovi", "argenteam", "assrt", "subscene"]
 
-    # Insert providers in database table
-    for provider_name in providers_list:
-        c.execute('''INSERT OR IGNORE INTO table_settings_providers(name) VALUES(?)''', (provider_name, ))
-
-    # Commit changes to database table
-    db.commit()
-
-    # Close database connection
-    db.close()
+if not settings.general.throtteled_providers:
+    tp = {}
+else:
+    tp = eval(str(settings.general.throtteled_providers))
 
 
+def provider_pool():
+    if settings.general.getboolean('multithreading'):
+        return subliminal_patch.core.SZAsyncProviderPool
+    return subliminal_patch.core.SZProviderPool
+
+    
 def get_providers():
-    db = sqlite3.connect(os.path.join(config_dir, 'db/bazarr.db'), timeout=30)
-    c = db.cursor()
-    enabled_providers = c.execute("SELECT * FROM table_settings_providers WHERE enabled = 1").fetchall()
-    c.close()
-
+    changed = False
     providers_list = []
-    if len(enabled_providers) > 0:
-        for provider in enabled_providers:
-            providers_list.append(provider[0])
-    else:
-        providers_list = None
+    if settings.general.enabled_providers:
+        for provider in settings.general.enabled_providers.lower().split(','):
+            reason, until, throttle_desc = tp.get(provider, (None, None, None))
+            providers_list.append(provider)
+    
+            if reason:
+                now = datetime.datetime.now()
+                if now < until:
+                    logging.info("Not using %s until %s, because of: %s", provider,
+                                 until.strftime("%y/%m/%d %H:%M"), reason)
+                    providers_list.remove(provider)
+                else:
+                    logging.info("Using %s again after %s, (disabled because: %s)", provider, throttle_desc, reason)
+                    del tp[provider]
+                    settings.general.throtteled_providers = str(tp)
+                    changed = True
 
+        if changed:
+            with open(os.path.join(args.config_dir, 'config', 'config.ini'), 'w+') as handle:
+                settings.write(handle)
+
+        # if forced only is enabled: # fixme: Prepared for forced only implementation to remove providers with don't support forced only subtitles
+        #     for provider in providers_list:
+        #         if provider in PROVIDERS_FORCED_OFF:
+        #             providers_list.remove(provider)
+    
+    if not providers_list:
+        providers_list = None
+    
     return providers_list
 
 
 def get_providers_auth():
-    db = sqlite3.connect(os.path.join(config_dir, 'db/bazarr.db'), timeout=30)
-    c = db.cursor()
-    enabled_providers = c.execute("SELECT * FROM table_settings_providers WHERE enabled = 1 AND username is not NULL AND password is not NULL").fetchall()
-    c.close()
-
-    providers_auth = collections.defaultdict(dict)
-    if len(enabled_providers) > 0:
-        for provider in enabled_providers:
-            providers_auth[provider[0]] = {}
-            providers_auth[provider[0]]['username'] = provider[2]
-            providers_auth[provider[0]]['password'] = provider[3]
-    else:
-        providers_auth = None
-
+    providers_auth = {
+        'addic7ed': {'username': settings.addic7ed.username,
+                     'password': settings.addic7ed.password,
+                     'use_random_agents': settings.addic7ed.getboolean('random_agents'),
+                     },
+        'opensubtitles': {'username': settings.opensubtitles.username,
+                          'password': settings.opensubtitles.password,
+                          'use_tag_search': settings.opensubtitles.getboolean('use_tag_search'),
+                          'only_foreign': False,  # fixme
+                          'also_foreign': False,  # fixme
+                          'is_vip': settings.opensubtitles.getboolean('vip'),
+                          'use_ssl': settings.opensubtitles.getboolean('ssl'),
+                          'timeout': int(settings.opensubtitles.timeout) or 15,
+                          'skip_wrong_fps': settings.opensubtitles.getboolean('skip_wrong_fps'),
+                          },
+        'podnapisi': {
+            'only_foreign': False,  # fixme
+            'also_foreign': False,  # fixme
+        },
+        'subscene': {
+            'only_foreign': False,  # fixme
+        },
+        'legendastv': {'username': settings.legendastv.username,
+                       'password': settings.legendastv.password,
+                       },
+        'xsubs': {'username': settings.xsubs.username,
+                  'password': settings.xsubs.password,
+                       },
+        'assrt': {'token': settings.assrt.token, }
+    }
+    
     return providers_auth
+
+
+def provider_throttle(name, exception):
+    cls = getattr(exception, "__class__")
+    cls_name = getattr(cls, "__name__")
+    if cls not in VALID_THROTTLE_EXCEPTIONS:
+        for valid_cls in VALID_THROTTLE_EXCEPTIONS:
+            if isinstance(cls, valid_cls):
+                cls = valid_cls
+    
+    throttle_data = PROVIDER_THROTTLE_MAP.get(name, PROVIDER_THROTTLE_MAP["default"]).get(cls, None) or \
+                    PROVIDER_THROTTLE_MAP["default"].get(cls, None)
+    
+    if not throttle_data:
+        return
+    
+    throttle_delta, throttle_description = throttle_data
+    throttle_until = datetime.datetime.now() + throttle_delta
+    
+    tp[name] = (cls_name, throttle_until, throttle_description)
+    
+    settings.general.throtteled_providers = str(tp)
+    with open(os.path.join(args.config_dir, 'config', 'config.ini'), 'w+') as handle:
+        settings.write(handle)
+    
+    logging.info("Throttling %s for %s, until %s, because of: %s. Exception info: %r", name, throttle_description,
+                 throttle_until.strftime("%y/%m/%d %H:%M"), cls_name, exception.message)
