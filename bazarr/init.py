@@ -14,6 +14,19 @@ from config import settings
 from check_update import check_releases
 from get_args import args
 
+# set subliminal_patch user agent
+os.environ["SZ_USER_AGENT"] = "Bazarr/1"
+
+# set anti-captcha provider and key
+if settings.general.anti_captcha_provider == 'anti-captcha':
+    os.environ["ANTICAPTCHA_CLASS"] = 'AntiCaptchaProxyLess'
+    os.environ["ANTICAPTCHA_ACCOUNT_KEY"] = settings.anticaptcha.anti_captcha_key
+elif settings.general.anti_captcha_provider == 'death-by-captcha':
+    os.environ["ANTICAPTCHA_CLASS"] = 'DeathByCaptchaProxyLess'
+    os.environ["ANTICAPTCHA_ACCOUNT_KEY"] = ':'.join({settings.deathbycaptcha.username, settings.deathbycaptcha.password})
+else:
+    os.environ["ANTICAPTCHA_CLASS"] = ''
+
 # Check if args.config_dir exist
 if not os.path.exists(args.config_dir):
     # Create config_dir directory tree
@@ -127,9 +140,13 @@ try:
     settings.general.enabled_providers = u'' if not providers_list else ','.join(providers_list)
     with open(os.path.join(args.config_dir, 'config', 'config.ini'), 'w+') as handle:
         settings.write(handle)
-
 except:
     pass
+
+if settings.general.throtteled_providers == '' or None:
+    settings.general.throtteled_providers = '{}'
+    with open(os.path.join(args.config_dir, 'config', 'config.ini'), 'w+') as handle:
+        settings.write(handle)
 
 if not os.path.exists(os.path.normpath(os.path.join(args.config_dir, 'config', 'users.json'))):
     cork = Cork(os.path.normpath(os.path.join(args.config_dir, 'config')), initialize=True)
