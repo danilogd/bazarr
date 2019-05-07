@@ -6,9 +6,9 @@ class SubtitulamosConverter(LanguageReverseConverter):
     def __init__(self):
         self.alpha2_converter = language_converters['alpha2']
         self.from_subtitulamos = {u'Català': ('cat',), 'Galego': ('glg',), 'English': ('eng',),
-                                  u'Español (Latinoamérica)': ('lat',), u'Español (España)': ('spa',)}
+                                  u'Español (Latinoamérica)': ('ltm',), u'Español (España)': ('spa',)}
         self.to_subtitulamos = {('cat',): 'Català', ('glg',): 'Galego', ('eng',): 'English',
-                                ('lat',): 'Español (Latinoamérica)', ('spa',): 'Español (España)'}
+                                ('ltm',): 'Español (Latinoamérica)', ('spa',): 'Español (España)'}
         self.codes = self.alpha2_converter.codes | set(self.from_subtitulamos.keys())
 
     def convert(self, alpha3, country=None, script=None):
