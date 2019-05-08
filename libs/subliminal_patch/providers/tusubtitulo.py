@@ -65,9 +65,10 @@ class TuSubtituloSubtitle(Subtitle):
 
 class TVsubtitlesProvider(Provider):
     """TVsubtitles Provider."""
-    languages = {Language('cat', 'SP'), Language('spa', 'LA'), Language('spa', 'SP')}
+    languages = {Language(l) for l in ['ltm', 'spa', 'cat', 'glg', 'eng']}
     video_types = (Episode,)
     server_url = 'http://www.tusubtitulo.com/'
+    subtitle_class = TuSubtituloSubtitle
 
     def initialize(self):
         self.session = Session()
