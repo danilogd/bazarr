@@ -1,20 +1,20 @@
 # -*- coding: utf-8 -*-
 import logging
-import re
 
 from babelfish import Language, language_converters
 from guessit import guessit
 from requests import Session
 
-from . import ParserBeautifulSoup, Provider
-from .. import __short_version__
-from ..cache import SHOW_EXPIRATION_TIME, region
-from ..exceptions import AuthenticationError, ConfigurationError, DownloadLimitExceeded, TooManyRequests
-from ..score import get_equivalent_release_groups
-from ..subtitle import Subtitle, fix_line_ending, guess_matches
-from ..utils import sanitize, sanitize_release_group
-from ..video import Episode
-from ..refiners.tvdb import TVDBClient, refine
+from subliminal.providers import ParserBeautifulSoup, Provider
+from subliminal import __short_version__
+from subliminal.cache import SHOW_EXPIRATION_TIME, region
+from subliminal.exceptions import AuthenticationError, ConfigurationError, DownloadLimitExceeded
+from subliminal_patch.exceptions import TooManyRequests
+from subliminal.score import get_equivalent_release_groups
+from subliminal.subtitle import Subtitle, fix_line_ending, guess_matches
+from subliminal.utils import sanitize, sanitize_release_group
+from subliminal.video import Episode
+from subliminal.refiners.tvdb import TVDBClient, refine
 
 logger = logging.getLogger(__name__)
 
@@ -111,7 +111,7 @@ class TVsubtitlesProvider(Provider):
         series_year = '%s %d' % (series, year) if year is not None else series
 
         # make the search
-        logger.info('Searching show ids with %r', params)
+        logger.info('Searching show ids with %r', series_year)
         r = self.session.get(self.server_url + 'series.php', timeout=10)
         soup = ParserBeautifulSoup(r.content, ['lxml', 'html.parser'])
 

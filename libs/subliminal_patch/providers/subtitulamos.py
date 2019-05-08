@@ -5,14 +5,15 @@ from babelfish import Language, language_converters
 from guessit import guessit
 from requests import Session
 
-from . import ParserBeautifulSoup, Provider
-from .. import __short_version__
-from ..cache import SHOW_EXPIRATION_TIME, region
-from ..exceptions import AuthenticationError, ConfigurationError, DownloadLimitExceeded
-from ..score import get_equivalent_release_groups
-from ..subtitle import Subtitle, fix_line_ending, guess_matches
-from ..utils import sanitize, sanitize_release_group
-from ..video import Episode
+from subliminal.providers import ParserBeautifulSoup, Provider
+from subliminal import __short_version__
+from subliminal.cache import SHOW_EXPIRATION_TIME, region
+from subliminal.exceptions import AuthenticationError, ConfigurationError, DownloadLimitExceeded
+from subliminal.score import get_equivalent_release_groups
+from subliminal.subtitle import Subtitle, fix_line_ending, guess_matches
+from subliminal.utils import sanitize, sanitize_release_group
+from subliminal.video import Episode
+
 
 logger = logging.getLogger(__name__)
 
