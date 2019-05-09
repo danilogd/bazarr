@@ -31,7 +31,7 @@ PROVIDER_THROTTLE_MAP = {
 }
 
 PROVIDERS_FORCED_OFF = ["addic7ed", "tvsubtitles", "legendastv", "napiprojekt", "shooter", "hosszupuska",
-                        "supersubtitles", "titlovi", "argenteam", "assrt", "subscene"]
+                        "supersubtitles", "titlovi", "argenteam", "assrt", "subscene", "subtitulamos", "tusubtitulo"]
 
 if not settings.general.throtteled_providers:
     tp = {}

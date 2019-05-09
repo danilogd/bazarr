@@ -22,8 +22,6 @@ def load_language_in_db():
     c.executemany('''INSERT OR IGNORE INTO table_settings_languages(code3, code2, name) VALUES(?, ?, ?)''', langs)
     c.execute('''INSERT OR IGNORE INTO table_settings_languages(code3, code2, name) VALUES(?, ?, ?)''',
               ('pob', 'pb', 'Brazilian Portuguese'))
-    c.execute('''INSERT OR IGNORE INTO table_settings_languages(code3, code2, name) VALUES(?, ?, ?)''',
-              ('ltm', 'lm', 'Latin American Spanish'))
     
     langs = [[lang.bibliographic, lang.alpha_3]
              for lang in pycountry.languages
