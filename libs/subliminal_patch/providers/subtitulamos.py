@@ -20,7 +20,7 @@ from subzero.language import Language
 
 logger = logging.getLogger(__name__)
 
-language_converters.register('subtitulamos = subliminal.converters.subtitulamos:SubtitulamosConverter')
+language_converters.register('subtitulamos = subliminal_patch.converters.subtitulamos:SubtitulamosConverter')
 
 
 class SubtitulamosSubtitle(Subtitle):

@@ -21,7 +21,7 @@ from subzero.language import Language
 
 logger = logging.getLogger(__name__)
 
-language_converters.register('tusubtitulo = subliminal.converters.tusubtitulo:TuSubtituloConverter')
+language_converters.register('tusubtitulo = subliminal_patch.converters.tusubtitulo:TuSubtituloConverter')
 
 class TuSubtituloSubtitle(Subtitle):
     """TuSubtitulo.com Subtitle."""
