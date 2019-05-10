@@ -117,11 +117,11 @@ class SubtitulamosProvider(Provider):
             if row['class'][0] == 'subtitle_language':
                 language = Language.fromsubtitulamos(row.text)
             if row['class'][0] == 'compact':
-                versiones = row.select_one('.version_name').text.split('/')
                 completado = row.select('.unavailable') == []
-                download_link = self.server_url + row.select_one('.download_subtitle').parent['href']
-                for version in versiones:
-                    if completado:
+                if completado:
+                    download_link = self.server_url + row.select_one('.download_subtitle').parent['href']
+                    versiones = row.select_one('.version_name').text.split('/')
+                    for version in versiones:
                         subtitle = self.subtitle_class(language, series, int(season), int(episode), title, version, download_link)
                         logger.debug('Found subtitle %r', subtitle)
                         subtitles.append(subtitle)
