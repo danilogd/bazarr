@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 
-from babelfish import Language, language_converters
+from babelfish import language_converters
 from guessit import guessit
 from requests import Session
 
@@ -13,6 +13,7 @@ from subliminal.score import get_equivalent_release_groups
 from subliminal.subtitle import Subtitle, fix_line_ending, guess_matches
 from subliminal.utils import sanitize, sanitize_release_group
 from subliminal.video import Episode
+from subzero.language import Language
 
 
 logger = logging.getLogger(__name__)
