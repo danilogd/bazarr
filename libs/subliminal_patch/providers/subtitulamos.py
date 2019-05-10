@@ -6,7 +6,7 @@ from babelfish import language_converters
 from guessit import guessit
 from requests import Session
 
-from subliminal.providers import ParserBeautifulSoup, Provider
+from subliminal_patch.providers import ParserBeautifulSoup, Provider
 from subliminal import __short_version__
 from subliminal.cache import SHOW_EXPIRATION_TIME, region
 from subliminal.exceptions import AuthenticationError, ConfigurationError, DownloadLimitExceeded
