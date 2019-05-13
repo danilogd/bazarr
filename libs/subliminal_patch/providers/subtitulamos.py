@@ -12,7 +12,8 @@ from subliminal import __short_version__
 from subliminal.cache import SHOW_EXPIRATION_TIME, region
 from subliminal.exceptions import AuthenticationError, ConfigurationError, DownloadLimitExceeded
 from subliminal.score import get_equivalent_release_groups
-from subliminal.subtitle import Subtitle, fix_line_ending, guess_matches
+from subliminal_patch.subtitle import Subtitle, guess_matches
+from subliminal.subtitle import  fix_line_ending
 from subliminal.utils import sanitize, sanitize_release_group
 from subliminal.video import Episode
 from subzero.language import Language
