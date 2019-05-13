@@ -23,18 +23,23 @@ logger = logging.getLogger(__name__)
 
 language_converters.register('subtitulamos = subliminal_patch.converters.subtitulamos:SubtitulamosConverter')
 
+'MEMENTO': ['480p'],
+'MEMENTO 1080P/720P': ['1080p', '720p']
+
+
 
 class SubtitulamosSubtitle(Subtitle):
     """Subtitulamos.tv Subtitle."""
     provider_name = 'subtitulamos'
 
-    def __init__(self, language, series, season, episode, title, version, download_link):
+    def __init__(self, language, series, season, episode, title, versions, formats, download_link):
         super(SubtitulamosSubtitle, self).__init__(language)
         self.series = series
         self.season = season
         self.episode = episode
         self.title = title
-        self.version = version
+        self.versions = versions
+        self.formats = formats
         self.download_link = download_link
 
     @property
@@ -120,12 +125,14 @@ class SubtitulamosProvider(Provider):
             if row['class'][0] == 'compact':
                 completado = row.select('.unavailable') == []
                 if completado:
-                    download_link = self.server_url + row.select_one('.download_subtitle').parent['href']
-                    versiones = row.select_one('.version_name').text.split('/')
-                    for version in versiones:
-                        subtitle = self.subtitle_class(language, series, int(season), int(episode), title, version, download_link)
-                        logger.debug('Found subtitle %r', subtitle)
-                        subtitles.append(subtitle)
+                    #fix fix fix
+                    # formats = []
+                    # download_link = self.server_url + row.select_one('.download_subtitle').parent['href']
+                    # versions = sanitize_release_group(row.select_one('.version_name').text).split('/')
+
+                    # subtitle = self.subtitle_class(language, series, int(season), int(episode), title, versions, formats, download_link)
+                    # logger.debug('Found subtitle %r', subtitle)
+                    # subtitles.append(subtitle)
             row = row.find_next_sibling('div')
 
         return subtitles
