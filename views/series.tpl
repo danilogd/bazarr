@@ -1,6 +1,6 @@
+<!DOCTYPE html>
 <html lang="en">
 	<head>
-		<!DOCTYPE html>
 		<script src="{{base_url}}static/jquery/jquery-latest.min.js"></script>
 		<script src="{{base_url}}static/semantic/semantic.min.js"></script>
 		<link rel="stylesheet" href="{{base_url}}static/semantic/semantic.min.css">
@@ -59,7 +59,7 @@
 			<div class="ui basic buttons">
 				<button id="serieseditor" class="ui button"><i class="configure icon"></i>Series Editor</button>
 			</div>
-			<table id="tableseries" class="ui very basic selectable table">
+			<table id="tableseries" class="ui very basic selectable stackable table">
 				<thead>
 					<tr>
 						<th>Name</th>

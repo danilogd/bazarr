@@ -1,6 +1,6 @@
 # coding=utf-8
 
-bazarr_version = '0.7.3'
+bazarr_version = '0.7.4'
 
 import gc
 import sys
@@ -971,6 +971,7 @@ def historyseries():
     data = c.fetchall()
 
     upgradable_episodes = []
+    upgradable_episodes_not_perfect = []
     if settings.general.getboolean('upgrade_subs'):
         days_to_upgrade_subs = settings.general.days_to_upgrade_subs
         minimum_timestamp = ((datetime.now() - timedelta(days=int(days_to_upgrade_subs))) -
@@ -987,7 +988,6 @@ def historyseries():
                                                   timestamp > ? AND score is not null
                                          GROUP BY table_history.video_path, table_history.language""",
                                         (minimum_timestamp,)).fetchall()
-        upgradable_episodes_not_perfect = []
         for upgradable_episode in upgradable_episodes:
             try:
                 int(upgradable_episode[2])
@@ -1044,6 +1044,7 @@ def historymovies():
     data = c.fetchall()
 
     upgradable_movies = []
+    upgradable_movies_not_perfect = []
     if settings.general.getboolean('upgrade_subs'):
         days_to_upgrade_subs = settings.general.days_to_upgrade_subs
         minimum_timestamp = ((datetime.now() - timedelta(days=int(days_to_upgrade_subs))) -
@@ -1060,7 +1061,6 @@ def historymovies():
                                                 timestamp > ? AND score is not null
                                        GROUP BY video_path, language""",
                                       (minimum_timestamp,)).fetchall()
-        upgradable_movies_not_perfect = []
         for upgradable_movie in upgradable_movies:
             try:
                 int(upgradable_movie[2])
@@ -1234,6 +1234,11 @@ def save_settings():
         settings_general_embedded = 'False'
     else:
         settings_general_embedded = 'True'
+    settings_general_ignore_pgs = request.forms.get('settings_general_ignore_pgs')
+    if settings_general_ignore_pgs is None:
+        settings_general_ignore_pgs = 'False'
+    else:
+        settings_general_ignore_pgs = 'True'
     settings_general_adaptive_searching = request.forms.get('settings_general_adaptive_searching')
     if settings_general_adaptive_searching is None:
         settings_general_adaptive_searching = 'False'
@@ -1307,7 +1312,10 @@ def save_settings():
     settings.general.path_mappings_movie = text_type(settings_general_pathmapping_movie)
     settings.general.page_size = text_type(settings_page_size)
     settings.general.subfolder = text_type(settings_subfolder)
-    settings.general.subfolder_custom = text_type(settings_subfolder_custom)
+    if settings.general.subfolder == 'current':
+        settings.general.subfolder_custom = ''
+    else:
+        settings.general.subfolder_custom = text_type(settings_subfolder_custom)
     settings.general.upgrade_subs = text_type(settings_upgrade_subs)
     settings.general.days_to_upgrade_subs = text_type(settings_days_to_upgrade_subs)
     settings.general.upgrade_manual = text_type(settings_upgrade_manual)
@@ -1329,6 +1337,7 @@ def save_settings():
 
     settings.general.minimum_score_movie = text_type(settings_general_minimum_score_movies)
     settings.general.use_embedded_subs = text_type(settings_general_embedded)
+    settings.general.ignore_pgs_subs = text_type(settings_general_ignore_pgs)
     settings.general.adaptive_searching = text_type(settings_general_adaptive_searching)
     settings.general.multithreading = text_type(settings_general_multithreading)
     
@@ -1651,6 +1660,8 @@ def system():
         if isinstance(job.trigger, CronTrigger):
             if str(job.trigger.__getstate__()['fields'][0]) == "2100":
                 next_run = 'Never'
+            else:
+                next_run = pretty.date(job.next_run_time.replace(tzinfo=None))
         else:
             next_run = pretty.date(job.next_run_time.replace(tzinfo=None))
 
@@ -1956,7 +1967,7 @@ def api_wanted():
     db = sqlite3.connect(os.path.join(args.config_dir, 'db', 'bazarr.db'), timeout=30)
     c = db.cursor()
     data = c.execute(
-        "SELECT table_shows.title, table_episodes.season || 'x' || table_episodes.episode, table_episodes.title, table_episodes.missing_subtitles FROM table_episodes INNER JOIN table_shows on table_shows.sonarrSeriesId = table_episodes.sonarrSeriesId WHERE table_episodes.missing_subtitles != '[]' ORDER BY table_episodes._rowid_ DESC LIMIT 10").fetchall()
+        "SELECT table_shows.title, table_episodes.season || 'x' || table_episodes.episode, table_episodes.title, table_episodes.missing_subtitles FROM table_episodes prin WHERE table_episodes.missing_subtitles != '[]' ORDER BY table_episodes._rowid_ DESC LIMIT 10").fetchall()
     c.close()
     return dict(subtitles=data)
 
