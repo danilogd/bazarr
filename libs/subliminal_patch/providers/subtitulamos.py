@@ -25,8 +25,8 @@ logger = logging.getLogger(__name__)
 language_converters.register('subtitulamos = subliminal_patch.converters.subtitulamos:SubtitulamosConverter')
 
 exceptions = {
-'MEMENTO [0-9]+ MB': [['MEMENTO'], ['480p']],
-'MEMENTO 1080P/720P', [['MEMENTO'], ['1080p', '720p']]
+'MEMENTO \d+ Mb': 'MEMENTO.480p',
+'MEMENTO 1080p/720p': 'MEMENTO.1080p/MEMENTO.720p'
 }
 
 
@@ -35,19 +35,14 @@ class SubtitulamosSubtitle(Subtitle):
     """Subtitulamos.tv Subtitle."""
     provider_name = 'subtitulamos'
 
-    def __init__(self, language, series, season, episode, title, groups, formats, download_link):
+    def __init__(self, language, series, season, episode, title, version, download_link):
         super(SubtitulamosSubtitle, self).__init__(language)
         self.series = series
         self.season = season
         self.episode = episode
         self.title = title
-        self.groups = groups
-        self.formats = formats
+        self.version = version
         self.download_link = download_link
-
-    @property
-    def id(self):
-        return self.download_link
 
     def get_matches(self, video):
         matches = set()
@@ -65,11 +60,16 @@ class SubtitulamosSubtitle(Subtitle):
         if video.title and sanitize(self.title) == sanitize(video.title):
             matches.add('title')
         # release group
-        if video.release_group in self.groups:
+        release = ('%s.S%dE%d.x264.%s' % self.series, self.season, self.episode, self.version)
+        guess = guessit(release)
+        if video.release_group and 'release_group' in guess and guess['release_group'] == video.release_group:
             matches.add('release_group')
 
-        if video.resolution in self.formats or not self.formats:
+        if video.resolution and 'screen_size' in guess and guess['screen_size'] == video.resolution:
             matches.add('resolution')
+
+        if video.source and 'format' in guess and guess['format'] == video.source:
+            matches.add('source')
 
         return matches
 
@@ -129,20 +129,14 @@ class SubtitulamosProvider(Provider):
             if row['class'][0] == 'compact':
                 completado = row.select('.unavailable') == []
                 if completado:
-                    #fix fix fix
-                    formats = []
                     download_link = self.server_url + row.select_one('.download_subtitle').parent['href']
                     versions = sanitize_release_group(row.select_one('.version_name').text)
-                    for regex, info in exceptions:
-                        if re.match(regex, versions):
-                            groups = info[0]
-                            formats = info[1]
-                            except = True
-                    if not except:
-                        groups = versions.split('/')
-                    subtitle = self.subtitle_class(language, series, int(season), int(episode), title, groups, formats, download_link)
-                    logger.debug('Found subtitle %r', subtitle)
-                    subtitles.append(subtitle)
+                    for regex, info in exceptions.items():
+                        re.sub(regex, info, versions, flags=re.IGNORECASE)
+                    for version in versions.split('/'):
+                        subtitle = self.subtitle_class(language, series, int(season), int(episode), title, version, download_link)
+                        logger.debug('Found subtitle %r', subtitle)
+                        subtitles.append(subtitle)
             row = row.find_next_sibling('div')
 
         return subtitles
