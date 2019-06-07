@@ -547,13 +547,13 @@
                         <div id="subtitriid_option" class="ui grid container">
 
                         </div>
-
+                        
                         <div class="middle aligned row">
                             <div class="right aligned four wide column">
                                 <label>Subtitulamos.tv</label>
                             </div>
                             <div class="one wide column">
-                                <div id="Subtitulamos" class="ui toggle checkbox provider">
+                                <div id="subtitulamos" class="ui toggle checkbox provider">
                                     <input type="checkbox">
                                     <label></label>
                                 </div>
@@ -567,7 +567,9 @@
                             </div>
                         </div>
                         <div id="subtitulamos_option" class="ui grid container">
-
+                        
+                        </div>
+                        
                         <div class="middle aligned row">
                             <div class="right aligned four wide column">
                                 <label>SubZ</label>
@@ -619,13 +621,13 @@
                         <div id="titlovi_option" class="ui grid container">
 
                         </div>
-
+                        
                         <div class="middle aligned row">
                             <div class="right aligned four wide column">
                                 <label>TuSubtitulo</label>
                             </div>
                             <div class="one wide column">
-                                <div id="TuSubtitulo" class="ui toggle checkbox provider">
+                                <div id="tusubtitulo" class="ui toggle checkbox provider">
                                     <input type="checkbox">
                                     <label></label>
                                 </div>
@@ -639,7 +641,9 @@
                             </div>
                         </div>
                         <div id="tusubtitulo_option" class="ui grid container">
-
+                        
+                        </div>
+                        
                         <div class="middle aligned row">
                             <div class="right aligned four wide column">
                                 <label>TVSubtitles</label>
