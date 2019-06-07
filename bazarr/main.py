@@ -1,6 +1,6 @@
 # coding=utf-8
 
-bazarr_version = '0.7.4'
+bazarr_version = '0.7.5'
 
 import gc
 import sys
@@ -58,8 +58,6 @@ from get_providers import get_providers, get_providers_auth, list_throttled_prov
 from get_series import *
 from get_episodes import *
 
-if not args.no_update:
-    from check_update import check_and_apply_update
 from list_subtitles import store_subtitles, store_subtitles_movie, series_scan_subtitles, movies_scan_subtitles, \
     list_missing_subtitles, list_missing_subtitles_movies
 from get_subtitle import download_subtitle, series_download_subtitles, movies_download_subtitles, \
@@ -80,6 +78,10 @@ os.environ["SZ_USER_AGENT"] = "Bazarr/1"
 os.environ["BAZARR_VERSION"] = bazarr_version
 
 configure_logging(settings.general.getboolean('debug') or args.debug)
+
+# Check and install update on startup when running on Windows from installer
+if args.release_update:
+    check_and_apply_update()
 
 if settings.proxy.type != 'None':
     if settings.proxy.username != '' and settings.proxy.password != '':
@@ -391,6 +393,8 @@ def save_wizard():
     settings.opensubtitles.skip_wrong_fps = text_type(settings_opensubtitles_skip_wrong_fps)
     settings.xsubs.username = request.forms.get('settings_xsubs_username')
     settings.xsubs.password = request.forms.get('settings_xsubs_password')
+    settings.napisy24.username = request.forms.get('settings_napisy24_username')
+    settings.napisy24.password = request.forms.get('settings_napisy24_password')
     
     settings_subliminal_languages = request.forms.getall('settings_subliminal_languages')
     c.execute("UPDATE table_settings_languages SET enabled = 0")
@@ -1219,6 +1223,11 @@ def save_settings():
         settings_general_automatic = 'False'
     else:
         settings_general_automatic = 'True'
+    settings_general_update_restart = request.forms.get('settings_general_update_restart')
+    if settings_general_update_restart is None:
+        settings_general_update_restart = 'False'
+    else:
+        settings_general_update_restart = 'True'
     settings_general_single_language = request.forms.get('settings_general_single_language')
     if settings_general_single_language is None:
         settings_general_single_language = 'False'
@@ -1234,6 +1243,11 @@ def save_settings():
         settings_general_embedded = 'False'
     else:
         settings_general_embedded = 'True'
+    settings_general_utf8_encode = request.forms.get('settings_general_utf8_encode')
+    if settings_general_utf8_encode is None:
+        settings_general_utf8_encode = 'False'
+    else:
+        settings_general_utf8_encode = 'True'
     settings_general_ignore_pgs = request.forms.get('settings_general_ignore_pgs')
     if settings_general_ignore_pgs is None:
         settings_general_ignore_pgs = 'False'
@@ -1302,6 +1316,7 @@ def save_settings():
     settings.general.chmod = text_type(settings_general_chmod)
     settings.general.branch = text_type(settings_general_branch)
     settings.general.auto_update = text_type(settings_general_automatic)
+    settings.general.update_restart = text_type(settings_general_update_restart)
     settings.general.single_language = text_type(settings_general_single_language)
     settings.general.minimum_score = text_type(settings_general_minimum_score)
     settings.general.use_scenename = text_type(settings_general_scenename)
@@ -1337,6 +1352,7 @@ def save_settings():
 
     settings.general.minimum_score_movie = text_type(settings_general_minimum_score_movies)
     settings.general.use_embedded_subs = text_type(settings_general_embedded)
+    settings.general.utf8_encode = text_type(settings_general_utf8_encode)
     settings.general.ignore_pgs_subs = text_type(settings_general_ignore_pgs)
     settings.general.adaptive_searching = text_type(settings_general_adaptive_searching)
     settings.general.multithreading = text_type(settings_general_multithreading)
@@ -1494,6 +1510,8 @@ def save_settings():
     settings.opensubtitles.skip_wrong_fps = text_type(settings_opensubtitles_skip_wrong_fps)
     settings.xsubs.username = request.forms.get('settings_xsubs_username')
     settings.xsubs.password = request.forms.get('settings_xsubs_password')
+    settings.napisy24.username = request.forms.get('settings_napisy24_username')
+    settings.napisy24.password = request.forms.get('settings_napisy24_password')
 
     settings_subliminal_languages = request.forms.getall('settings_subliminal_languages')
     c.execute("UPDATE table_settings_languages SET enabled = 0")
@@ -1557,13 +1575,12 @@ def save_settings():
     conn.commit()
     c.close()
 
+    schedule_update_job()
     sonarr_full_update()
     radarr_full_update()
 
     logging.info('BAZARR Settings saved succesfully.')
 
-    # reschedule full update task according to settings
-    sonarr_full_update()
 
     if ref.find('saved=true') > 0:
         redirect(ref)
@@ -1813,8 +1830,7 @@ def get_subtitle():
 @custom_auth_basic(check_credentials)
 def manual_search_json():
     authorize()
-    ref = request.environ['HTTP_REFERER']
-
+    
     episodePath = request.forms.get('episodePath')
     sceneName = request.forms.get('sceneName')
     language = request.forms.get('language')
@@ -1967,7 +1983,7 @@ def api_wanted():
     db = sqlite3.connect(os.path.join(args.config_dir, 'db', 'bazarr.db'), timeout=30)
     c = db.cursor()
     data = c.execute(
-        "SELECT table_shows.title, table_episodes.season || 'x' || table_episodes.episode, table_episodes.title, table_episodes.missing_subtitles FROM table_episodes prin WHERE table_episodes.missing_subtitles != '[]' ORDER BY table_episodes._rowid_ DESC LIMIT 10").fetchall()
+        "SELECT table_shows.title, table_episodes.season || 'x' || table_episodes.episode, table_episodes.title, table_episodes.missing_subtitles FROM table_episodes INNER JOIN table_shows on table_shows.sonarrSeriesId = table_episodes.sonarrSeriesId WHERE table_episodes.missing_subtitles != '[]' ORDER BY table_episodes._rowid_ DESC LIMIT 10").fetchall()
     c.close()
     return dict(subtitles=data)
 
@@ -1977,7 +1993,7 @@ def api_history():
     db = sqlite3.connect(os.path.join(args.config_dir, 'db', 'bazarr.db'), timeout=30)
     c = db.cursor()
     data = c.execute(
-        "SELECT table_shows.title, table_episodes.season || 'x' || table_episodes.episode, table_episodes.title, strftime('%Y-%m-%d', datetime(table_history.timestamp, 'unixepoch')), table_history.description FROM table_history INNER JOIN table_shows on table_shows.sonarrSeriesId = table_history.sonarrSeriesId INNER JOIN table_episodes on table_episodes.sonarrEpisodeId = table_history.sonarrEpisodeId WHERE table_history.action = '1' ORDER BY id DESC LIMIT 10").fetchall()
+        "SELECT table_shows.title, table_episodes.season || 'x' || table_episodes.episode, table_episodes.title, strftime('%Y-%m-%d', datetime(table_history.timestamp, 'unixepoch')), table_history.description FROM table_history INNER JOIN table_shows on table_shows.sonarrSeriesId = table_history.sonarrSeriesId INNER JOIN table_episodes on table_episodes.sonarrEpisodeId = table_history.sonarrEpisodeId WHERE table_history.action != '0' ORDER BY id DESC LIMIT 10").fetchall()
     c.close()
     return dict(subtitles=data)
 
@@ -1997,7 +2013,7 @@ def api_history():
     db = sqlite3.connect(os.path.join(args.config_dir, 'db', 'bazarr.db'), timeout=30)
     c = db.cursor()
     data = c.execute(
-        "SELECT table_movies.title, strftime('%Y-%m-%d', datetime(table_history_movie.timestamp, 'unixepoch')), table_history_movie.description FROM table_history_movie INNER JOIN table_movies on table_movies.radarrId = table_history_movie.radarrId WHERE table_history_movie.action = '1' ORDER BY id DESC LIMIT 10").fetchall()
+        "SELECT table_movies.title, strftime('%Y-%m-%d', datetime(table_history_movie.timestamp, 'unixepoch')), table_history_movie.description FROM table_history_movie INNER JOIN table_movies on table_movies.radarrId = table_history_movie.radarrId WHERE table_history_movie.action != '0' ORDER BY id DESC LIMIT 10").fetchall()
     c.close()
     return dict(subtitles=data)
 
@@ -2040,7 +2056,6 @@ def notifications():
 @custom_auth_basic(check_credentials)
 def running_tasks_list():
     return dict(tasks=running_tasks)
-
 
 # Mute DeprecationWarning
 warnings.simplefilter("ignore", DeprecationWarning)

@@ -31,6 +31,7 @@ defaults = {
         'page_size': '25',
         'minimum_score_movie': '70',
         'use_embedded_subs': 'True',
+        'utf8_encode': 'True',
         'ignore_pgs_subs': 'False',
         'adaptive_searching': 'False',
         'enabled_providers': '',
@@ -40,6 +41,7 @@ defaults = {
         'chmod': '0640',
         'subfolder': 'current',
         'subfolder_custom': '',
+        'update_restart': 'True',
         'upgrade_subs': 'True',
         'days_to_upgrade_subs': '7',
         'upgrade_manual': 'True',
@@ -107,6 +109,10 @@ defaults = {
     'deathbycaptcha': {
         'username': '',
         'password': ''
+    },
+    'napisy24': {
+        'username': '',
+        'password': ''
     }
 }
 
@@ -114,6 +120,7 @@ settings = simpleconfigparser(defaults=defaults)
 settings.read(os.path.join(args.config_dir, 'config', 'config.ini'))
 
 base_url = settings.general.base_url
+bazarr_url = 'http://localhost:' + (str(args.port) if args.port else settings.general.port) + base_url
 
 # sonarr url
 if settings.sonarr.getboolean('ssl'):
