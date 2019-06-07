@@ -60,9 +60,11 @@ If you need something that is not already part of Bazarr, feel free to create a 
 * Subs4Series
 * Subtitri.id.lv
 * Subtitri.nekur.net
+* Subtitulamos.tv
 * SubZ
 * Supersubtitles
 * Titlovi
+* TuSubtitulo
 * TVSubtitles
 * XSubs
 * Zimuku
