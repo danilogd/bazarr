@@ -44,6 +44,10 @@ class SubtitulamosSubtitle(Subtitle):
         self.version = version
         self.download_link = download_link
 
+    @property
+    def id(self):
+        return self.download_link
+
     def get_matches(self, video):
         matches = set()
 
@@ -60,16 +64,15 @@ class SubtitulamosSubtitle(Subtitle):
         if video.title and sanitize(self.title) == sanitize(video.title):
             matches.add('title')
         # release group
-        release = ('%s.S%dE%d.x264.%s' % self.series, self.season, self.episode, self.version)
-        guess = guessit(release)
-        if video.release_group and 'release_group' in guess and guess['release_group'] == video.release_group:
-            matches.add('release_group')
-
-        if video.resolution and 'screen_size' in guess and guess['screen_size'] == video.resolution:
-            matches.add('resolution')
-
-        if video.source and 'format' in guess and guess['format'] == video.source:
-            matches.add('source')
+        for ver in self.versions:
+            release = ('%s S%dE%d x264 %s' % self.series, self.season, self.episode, ver)
+            guess = guessit(release)
+            if video.release_group and 'release_group' in guess and guess['release_group'] == video.release_group:
+                matches.add('release_group')
+                if video.resolution and ('screen_size' in guess and guess['screen_size'] == video.resolution or 'screen_size' not in guess):
+                    matches.add('resolution')
+                if video.source and 'format' in guess and guess['format'] == video.source:
+                    matches.add('source')
 
         return matches
 
@@ -130,13 +133,13 @@ class SubtitulamosProvider(Provider):
                 completado = row.select('.unavailable') == []
                 if completado:
                     download_link = self.server_url + row.select_one('.download_subtitle').parent['href']
-                    versions = sanitize_release_group(row.select_one('.version_name').text)
+                    version = sanitize_release_group(row.select_one('.version_name').text)
                     for regex, info in exceptions.items():
-                        re.sub(regex, info, versions, flags=re.IGNORECASE)
-                    for version in versions.split('/'):
-                        subtitle = self.subtitle_class(language, series, int(season), int(episode), title, version, download_link)
-                        logger.debug('Found subtitle %r', subtitle)
-                        subtitles.append(subtitle)
+                        re.sub(regex, info, version, flags=re.IGNORECASE)
+                    versions = versions.split('/')
+                    subtitle = self.subtitle_class(language, series, int(season), int(episode), title, versions, download_link)
+                    logger.debug('Found subtitle %r', versions)
+                    subtitles.append(subtitle)
             row = row.find_next_sibling('div')
 
         return subtitles
