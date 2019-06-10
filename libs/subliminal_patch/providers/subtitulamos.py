@@ -74,6 +74,7 @@ class SubtitulamosSubtitle(Subtitle):
                 if video.source and 'format' in guess and guess['format'] == video.source:
                     matches.add('source')
 
+        logger.debug('Matches %r, %r', self.versions, matches)
         return matches
 
 class SubtitulamosProvider(Provider):
@@ -138,7 +139,7 @@ class SubtitulamosProvider(Provider):
                         re.sub(regex, info, version, flags=re.IGNORECASE)
                     versions = version.split('/')
                     subtitle = self.subtitle_class(language, series, int(season), int(episode), title, versions, download_link)
-                    logger.debug('Found subtitle %r', versions)
+                    logger.debug('Found subtitle %r, %r', versions, language)
                     subtitles.append(subtitle)
             row = row.find_next_sibling('div')
 
