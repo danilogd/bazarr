@@ -41,7 +41,7 @@ class SubtitulamosSubtitle(Subtitle):
         self.season = season
         self.episode = episode
         self.title = title
-        self.version = versions
+        self.versions = versions
         self.download_link = download_link
 
     @property
