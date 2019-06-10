@@ -50,7 +50,7 @@ class SubtitulamosSubtitle(Subtitle):
 
     def get_matches(self, video):
         matches = set()
-
+        logger.debug('Matching: %s; %s; %s; %s; %r', self.series, self.season, self.episode, self.title, self.versions)
         # series name
         if video.series and sanitize(self.series) in (sanitize(video.series), ('%s %d' % (sanitize(video.series), video.year))):
             matches.add('series')
