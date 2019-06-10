@@ -35,13 +35,13 @@ class SubtitulamosSubtitle(Subtitle):
     """Subtitulamos.tv Subtitle."""
     provider_name = 'subtitulamos'
 
-    def __init__(self, language, series, season, episode, title, version, download_link):
+    def __init__(self, language, series, season, episode, title, versions, download_link):
         super(SubtitulamosSubtitle, self).__init__(language)
         self.series = series
         self.season = season
         self.episode = episode
         self.title = title
-        self.version = version
+        self.version = versions
         self.download_link = download_link
 
     @property
