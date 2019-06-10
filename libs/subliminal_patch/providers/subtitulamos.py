@@ -136,7 +136,7 @@ class SubtitulamosProvider(Provider):
                     version = sanitize_release_group(row.select_one('.version_name').text)
                     for regex, info in exceptions.items():
                         re.sub(regex, info, version, flags=re.IGNORECASE)
-                    versions = versions.split('/')
+                    versions = version.split('/')
                     subtitle = self.subtitle_class(language, series, int(season), int(episode), title, versions, download_link)
                     logger.debug('Found subtitle %r', versions)
                     subtitles.append(subtitle)
