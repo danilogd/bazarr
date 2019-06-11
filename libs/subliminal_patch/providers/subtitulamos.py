@@ -65,7 +65,7 @@ class SubtitulamosSubtitle(Subtitle):
             matches.add('title')
         # release group
         for ver in self.versions:
-            release = ('%s S%sE%s x264 %s' % self.series, self.season, self.episode, ver)
+            release = '%s S%sE%s x264 %s' % (self.series, self.season, self.episode, ver)
             guess = guessit(release)
             if video.release_group and 'release_group' in guess and guess['release_group'] == video.release_group:
                 matches.add('release_group')
