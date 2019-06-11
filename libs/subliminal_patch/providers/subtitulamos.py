@@ -67,7 +67,7 @@ class SubtitulamosSubtitle(Subtitle):
         for ver in self.versions:
             release = '%s S%sE%s x264 %s' % (self.series, self.season, self.episode, ver)
             guess = guessit(release)
-            logger.debug('guess: %s, video: %s', guess['release_group'], sanitize_release_group(video.release_group))
+            logger.debug('guess: %r, video: %r', guess['release_group'], sanitize_release_group(video.release_group))
             if video.release_group and 'release_group' in guess and guess['release_group'] == sanitize_release_group(video.release_group):
                 matches.add('release_group')
                 if video.resolution and ('screen_size' in guess and guess['screen_size'] == video.resolution or 'screen_size' not in guess):
