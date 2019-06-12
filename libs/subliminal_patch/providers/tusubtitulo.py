@@ -68,7 +68,7 @@ class TuSubtituloSubtitle(Subtitle):
 
 class TVsubtitlesProvider(Provider):
     """TVsubtitles Provider."""
-    languages = {Language(l) for l in ['ltm', 'spa', 'cat', 'glg', 'eng']}
+    languages = {Language(l) for l in ['spa', 'cat', 'glg', 'eng']} | {Language('spa', 'ES')}
     video_types = (Episode,)
     server_url = 'http://www.tusubtitulo.com/'
     subtitle_class = TuSubtituloSubtitle
