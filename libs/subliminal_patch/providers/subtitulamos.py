@@ -49,36 +49,35 @@ class SubtitulamosSubtitle(Subtitle):
         return self.download_link
 
     def get_matches(self, video):
-        import pdb; pdb.set_trace()
         matches = set()
         # series name
-        if video.series and sanitize(self.series) in (sanitize(video.series), ('%s %d' % (sanitize(video.series), video.year))):
+        if hasattr(video, 'series') and sanitize(self.series) in (sanitize(video.series), ('%s %d' % (sanitize(video.series), video.year))):
             matches.add('series')
         # season
-        if video.season and self.season == video.season:
+        if hasattr(video, 'season') and self.season == video.season:
             matches.add('season')
         # episode
-        if video.episode and self.episode == video.episode:
+        if hasattr(video, 'episode') and self.episode == video.episode:
             matches.add('episode')
         # title of the episode
-        if video.title and sanitize(self.title) == sanitize(video.title):
+        if hasattr(video, 'title') and sanitize(self.title) == sanitize(video.title):
             matches.add('title')
         # release group
         for ver in self.versions:
             release = '%s S%sE%s x264 %s' % (self.series, self.season, self.episode, ver)
             guess = guessit(release)
-            if video.release_group and 'release_group' in guess and guess['release_group'].encode('UTF-8') == sanitize_release_group(video.release_group):
+            if hasattr(video, 'release_group') and 'release_group' in guess and guess['release_group'].encode('UTF-8') == sanitize_release_group(video.release_group):
                 matches.add('release_group')
-                if video.resolution and ('screen_size' in guess and guess['screen_size'] == video.resolution or 'screen_size' not in guess):
+                if hasattr(video, 'resolution') and ('screen_size' in guess and guess['screen_size'] == video.resolution or 'screen_size' not in guess):
                     matches.add('resolution')
-                if video.source and 'format' in guess and guess['format'] == video.source:
+                if hasattr(video, 'source') and 'format' in guess and guess['format'] == video.source:
                     matches.add('source')
         logger.debug('Matches %r, %r', self.versions, matches)
         return matches
 
 class SubtitulamosProvider(Provider):
     """Subtitulamos.tv Provider."""
-    languages = {Language(l) for l in ['ltm', 'spa', 'cat', 'glg', 'eng']}
+    languages = {Language(l) for l in ['spa', 'cat', 'glg', 'eng']} | {Language('spa', 'ES')}
     video_types = (Episode,)
     server_url = 'http://www.subtitulamos.tv'
     subtitle_class = SubtitulamosSubtitle

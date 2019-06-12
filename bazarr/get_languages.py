@@ -22,6 +22,8 @@ def load_language_in_db():
     c.executemany('''INSERT OR IGNORE INTO table_settings_languages(code3, code2, name) VALUES(?, ?, ?)''', langs)
     c.execute('''INSERT OR IGNORE INTO table_settings_languages(code3, code2, name) VALUES(?, ?, ?)''',
               ('pob', 'pb', 'Brazilian Portuguese'))
+    c.execute('''INSERT OR IGNORE INTO table_settings_languages(code3, code2, name) VALUES(?, ?, ?)''',
+              ('spn', 'sp', 'Spanish Spain'))
     
     langs = [[lang.bibliographic, lang.alpha_3]
              for lang in pycountry.languages
@@ -119,6 +121,8 @@ def get_language_set():
     for lang in languages:
         if lang[0] == 'pob':
             language_set.add(Language('por', 'BR'))
+        elif lang[0] == 'spn':
+            language_set.add(Language('spa', 'ES'))
         else:
             language_set.add(Language(lang[0]))
 

@@ -121,6 +121,8 @@ def download_subtitle(path, language, hi, providers, providers_auth, sceneName, 
     for l in language:
         if l == 'pob':
             language_set.add(Language('por', 'BR'))
+        elif l == 'spn':
+            language_set.add(Language('spa', 'ES'))
         else:
             language_set.add(Language(l))
     
@@ -266,6 +268,8 @@ def manual_search(path, language, hi, providers, providers_auth, sceneName, titl
         lang = alpha3_from_alpha2(lang)
         if lang == 'pob':
             language_set.add(Language('por', 'BR'))
+        elif lang[0] == 'spn':
+            language_set.add(Language('spa', 'ES'))
         else:
             language_set.add(Language(lang))
     
