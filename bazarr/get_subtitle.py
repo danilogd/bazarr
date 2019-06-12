@@ -191,6 +191,8 @@ def download_subtitle(path, language, hi, providers, providers_auth, sceneName, 
                         downloaded_provider = subtitle.provider_name
                         if subtitle.language == 'pt-BR':
                             downloaded_language_code3 = 'pob'
+                        elif subtitle.language == 'es-ES':
+                            downloaded_language_code3 = 'spn'
                         else:
                             downloaded_language_code3 = subtitle.language.alpha3
                         downloaded_language = language_from_alpha3(downloaded_language_code3)
@@ -268,7 +270,7 @@ def manual_search(path, language, hi, providers, providers_auth, sceneName, titl
         lang = alpha3_from_alpha2(lang)
         if lang == 'pob':
             language_set.add(Language('por', 'BR'))
-        elif lang[0] == 'spn':
+        elif lang == 'spn':
             language_set.add(Language('spa', 'ES'))
         else:
             language_set.add(Language(lang))
@@ -388,6 +390,8 @@ def manual_download_subtitle(path, language, hi, subtitle, provider, providers_a
                         downloaded_provider = saved_subtitle.provider_name
                         if saved_subtitle.language == 'pt-BR':
                             downloaded_language_code3 = 'pob'
+                        elif saved_subtitle.language == 'es-ES':
+                            downloaded_language_code3 = 'spn'
                         else:
                             downloaded_language_code3 = subtitle.language.alpha3
                         downloaded_language = language_from_alpha3(downloaded_language_code3)
