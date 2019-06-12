@@ -49,8 +49,8 @@ class SubtitulamosSubtitle(Subtitle):
         return self.download_link
 
     def get_matches(self, video):
+        import pdb; pdb.set_trace()
         matches = set()
-        logger.debug('Matching: %s; %s; %s; %s; %r', self.series, self.season, self.episode, self.title, self.versions)
         # series name
         if video.series and sanitize(self.series) in (sanitize(video.series), ('%s %d' % (sanitize(video.series), video.year))):
             matches.add('series')
@@ -67,14 +67,12 @@ class SubtitulamosSubtitle(Subtitle):
         for ver in self.versions:
             release = '%s S%sE%s x264 %s' % (self.series, self.season, self.episode, ver)
             guess = guessit(release)
-            logger.debug('guess: %r, video: %r', guess['release_group'], sanitize_release_group(video.release_group))
             if video.release_group and 'release_group' in guess and guess['release_group'].encode('UTF-8') == sanitize_release_group(video.release_group):
                 matches.add('release_group')
                 if video.resolution and ('screen_size' in guess and guess['screen_size'] == video.resolution or 'screen_size' not in guess):
                     matches.add('resolution')
                 if video.source and 'format' in guess and guess['format'] == video.source:
                     matches.add('source')
-
         logger.debug('Matches %r, %r', self.versions, matches)
         return matches
 
